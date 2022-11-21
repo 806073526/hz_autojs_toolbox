@@ -1,0 +1,62 @@
+{
+	"abis": ["arm64-v8a", "armeabi-v7a"],
+	"assets": [],
+	"build": {
+		"build_number": 17,
+		"build_time": 1667661429451,
+		"release": false
+	},
+	"encryptLevel": 3,
+	"useFeatures": [],
+	"launchConfig": {
+		"displaySplash": true,
+		"hideLogs": false,
+		"splashText": "欢迎关注华仔部落！",
+		"stableMode": false,
+		"splashIcon": null,
+		"splashLayoutXml": null
+	},
+	"main": "main.js",
+	"name": "华仔AutoJs工具箱",
+	"optimization": {
+		"removeOpenCv": false,
+		"unusedResources": false,
+		"removeAccessibilityService": false,
+		"obfuscateComponents": true
+	},
+	"packageName": "com.zjh336.cn.tools",
+	"scripts": {},
+	"versionCode": 1300,
+	"versionName": "1.3.0",
+	"icon": "images/ic_app_logo.png",
+	"publish": {
+		"category": "实用工具",
+		"details": "点击使用介绍",
+		"maxAutoJsVersion": 0,
+		"maxProVersion": 0,
+		"minAutoJsVersion": 0,
+		"minProVersion": 0,
+		"minSdkVersion": 0,
+		"permissions": [],
+		"summary": "图色脚本的好帮手",
+		"tags": []
+	},
+	"signingConfig": {
+		"keystore": "/storage/emulated/0/脚本/.keystore/autojsprotools.jks",
+		"alias": "zjh336",
+		"uuid": "1fc3bcba-43c2-4e32-9042-253c86ecd06c"
+	},
+	"androidResources": null,
+	"permissionConfig": {
+		"manifestPermissions": ["android.permission.ACCESS_NETWORK_STATE", "android.permission.FOREGROUND_SERVICE", "android.permission.INTERNET", "android.permission.READ_EXTERNAL_STORAGE", "android.permission.READ_PHONE_STATE", "android.permission.SYSTEM_ALERT_WINDOW", "android.permission.WRITE_EXTERNAL_STORAGE"],
+		"requestListOnStartup": ["android.permission.READ_PHONE_STATE", "android.permission.WRITE_EXTERNAL_STORAGE"]
+	},
+	"features": {
+		"builtInOCR": null,
+		"activityIntentTasks": false,
+		"nodejs": "disabled"
+	},
+	"plugins": {
+		"org.autojs.autojspro.plugin.mlkit.ocr": "1.1"
+	}
+}
