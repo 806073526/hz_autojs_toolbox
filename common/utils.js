@@ -26,10 +26,14 @@ importClass(java.util.HashMap);
 importClass(java.lang.ProcessBuilder);
 importClass(android.net.ConnectivityManager);
 importClass(android.net.TrafficStats);
+
+//importPackage(android.content)
 let config = require("./config.js")
 let commonConstant = require("./commonConstant.js")
 let toastCustom = null;
 let view = null
+
+
 
 var canvasFloat
 // 监听自定义toast方法
@@ -68,12 +72,12 @@ if (!deviceUUID) {
 }
 
 // 分辨率 以竖屏标准看
-utilsObj.getScreenWidth = ()=>{
+utilsObj.getScreenWidth = () => {
     let screenWidth = commonStorage.get("standardWidth") || device.width
     return screenWidth;
 }
 
-utilsObj.getScreenHeight = ()=>{
+utilsObj.getScreenHeight = () => {
     let screenHeight = commonStorage.get("standardHeight") || device.height
     return screenHeight;
 }
@@ -99,6 +103,8 @@ utilsObj.textFindOneClick = (content, times) => {
         one.clickCenter();
     }
 }
+
+
 
 
 // 获取屏幕方向
@@ -282,6 +288,289 @@ utilsObj.initOcr = (ocrName) => {
 utilsObj.getDeviceUUID = () => {
     return deviceUUID;
 }
+
+/**
+ * 根据业务名多条件匹配
+ * @param {Object} pageSetting 页面参数 取commonConstant的pageSetting_业务
+ * @param {Image} allScreenImg 全屏图片
+ */
+utilsObj.multipleConditionMatchingByServiceName = (serviceName, allScreenImg) => {
+    // 获取 配置的业务 的页面对象
+    let pageSetting = utilsObj.getCurPageStting(serviceName);
+    // 调用封装方法返回多条件匹配页面名称
+    let pageName = utilsObj.multipleConditionMatchingByPageSetting(pageSetting, allScreenImg);
+    return pageName;
+}
+
+
+
+/**
+ * 根据参数多条件匹配
+ * @param {Object} pageSetting 页面参数 取commonConstant的pageSetting_业务
+ * @param {Image} allScreenImg 全屏图片
+ */
+utilsObj.multipleConditionMatchingByPageSetting = (pageSetting, allScreenImg) => {
+
+    // 获取参与匹配的页面key
+    let joinMatchingPageKeys = utilsObj.getJoinMatchingPageKey()
+
+    // 寻找第一个匹配上的页面
+    let firstMatchingPageKey = joinMatchingPageKeys.find((settingKey) => {
+        // 获取页面配置对象
+        let pageSetingObj = pageSetting[settingKey];
+        if (!pageSetingObj) {
+            return false;
+        }
+        // 获取关系映射对象
+        let relationObj = pageSetingObj["relation"] || JSON.parse(JSON.stringify(commonConstant.relationDeafult));
+        // 总映射关系
+        let totalRelation = relationObj["total"]
+
+        let curSettingKey = "【" + settingKey + "】"
+        // 总匹配数量
+        let mathchingCount = 0;
+        try {
+            // 文字识别结果
+            let analysisChartResult = utilsObj.matchingAnalysisChart(totalRelation, relationObj["analysisChart"], pageSetingObj["analysisChart"], allScreenImg)
+            if (analysisChartResult) {
+                mathchingCount += 1
+                if ("or" === totalRelation) {
+                    return true;
+                }
+            }
+
+            // 多点找色结果
+            let multipleColorResult = utilsObj.matchingMultipleColor(totalRelation, relationObj["multipleColor"], pageSetingObj["multipleColor"], allScreenImg)
+            if (multipleColorResult) {
+                mathchingCount += 1
+                if ("or" === totalRelation) {
+                    return true;
+                }
+            }
+
+            // 区域找图结果(区域特征匹配)
+            let multipleImgResult = utilsObj.matchingRegionalFindImg(totalRelation, relationObj["multipleImg"], pageSetingObj["multipleImg"], allScreenImg)
+            if (multipleImgResult) {
+                mathchingCount += 1
+                if ("or" === totalRelation) {
+                    return true;
+                }
+            }
+
+            if ("and" === totalRelation && mathchingCount === 3 && commonStorage.get("debugModel")) {
+                console.verbose("总:" + curSettingKey + "匹配成功")
+            }
+        } catch (error) {
+            console.error("多条件匹配错误", error)
+        }
+        // 总映射关系为且时 总匹配数量为3 为true 否则为 false
+        return "and" === totalRelation && mathchingCount === 3
+    })
+    // 回收图片
+    utils.recycleNull(allScreenImg);
+    console.info("当前页:【" + (firstMatchingPageKey || "无匹配") + "】")
+    return firstMatchingPageKey || ""
+}
+
+
+// 匹配区域找图(区域特征匹配)
+utilsObj.matchingRegionalFindImg = (totalRelation, relation, multipleImgArr, img) => {
+    // 匹配数量
+    let matchingCount = 0;
+    if (!multipleImgArr || !multipleImgArr.length) {
+        // 总映射关系为且时，匹配条件为空，默认为true     总映射关系为或时，匹配条件为空，默认为false
+        return totalRelation === "and";
+    }
+
+    for (let i = 0; i < multipleImgArr.length; i++) {
+        let item = multipleImgArr[i]
+        // 获取坐标
+        let position = item["position"]
+        // 获取阈值
+        let threshold = item["threshold"] || 100
+        // 获取最大值
+        let maxVal = item["maxVal"] || 255
+        // 颜色值
+        let color = item["color"]
+        // 图片相似度
+        let imgThreshold = item["imgThreshold"]
+        // 文件路径
+        let pathName = item["pathName"]
+        // 是否开启灰度化
+        let isOpenGray = item["isOpenGray"] === 1
+        // 是否开启阈值化
+        let isOpenThreshold = item["isOpenThreshold"] === 1
+
+        // 大图缩放[0.1-1]
+        let bigScale = item["bigScale"] || 1
+        // 小图缩放[0.1-1]
+        let smallScale = item["smallScale"] || 1
+        // 特征相似度
+        let featuresThreshold = item["featuresThreshold"] || 0.8
+
+        // 绘图信息
+        let canvasMsg = item["canvasMsg"] || ""
+
+        // 读取目标图片
+        let targetImg = images.read(pathName);
+        // 区域找图或者找特征
+        let p = utilsObj.regionalFindImgOrFeatures(img, targetImg, position[0], position[1], position[2], position[3], threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+        // 回收图片
+        utils.recycleNull(targetImg);
+        // 找到了图片(特征)
+        if (p && p.x != -1) {
+            // 累计匹配数量
+            matchingCount += 1
+            // 或者关系
+            if ("or" === relation) {
+                // 跳出循环
+                break;
+            }
+        }
+    }
+    // 并且关系
+    if ("and" === relation) {
+        return multipleImgArr.length === matchingCount
+        // 或者关系
+    } else if ("or" === relation) {
+        return matchingCount >= 1
+    } else {
+        return false;
+    }
+}
+
+// 匹配多点找色
+utilsObj.matchingMultipleColor = (totalRelation, relation, multipleColorArr, img) => {
+    // 匹配数量
+    let matchingCount = 0;
+    if (!multipleColorArr || !multipleColorArr.length) {
+        // 总映射关系为且时，匹配条件为空，默认为true     总映射关系为或时，匹配条件为空，默认为false
+        return totalRelation === "and";
+    }
+    for (let i = 0; i < multipleColorArr.length; i++) {
+        let item = multipleColorArr[i]
+        // 获取坐标
+        let position = item["position"]
+        // 获取阈值
+        let threshold = item["threshold"] || 100
+        // 获取最大值
+        let maxVal = item["maxVal"] || 255
+        // 颜色值
+        let color = item["color"]
+        // 颜色阈值
+        let colorThreshold = item["colorThreshold"]
+        // 颜色其他项
+        let colorOther = item["colorOther"]
+        // 是否开启灰度化
+        let isOpenGray = item["isOpenGray"] === 1
+        // 是否开启阈值化
+        let isOpenThreshold = item["isOpenThreshold"] === 1
+        // 绘图信息
+        let canvasMsg = item["canvasMsg"] || ""
+
+        // 灰度化、阈值化区域多点找色
+        let p = utilsObj.regionalFindMultipleColor2(img, position[0], position[1], position[2], position[3], threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, canvasMsg)
+
+        // 找到了颜色
+        if (p && p.x != -1) {
+            // 累计匹配数量
+            matchingCount += 1
+            // 或者关系
+            if ("or" === relation) {
+                // 跳出循环
+                break;
+            }
+        }
+    }
+    // 并且关系
+    if ("and" === relation) {
+        return multipleColorArr.length === matchingCount
+        // 或者关系
+    } else if ("or" === relation) {
+        return matchingCount >= 1
+    } else {
+        return false;
+    }
+}
+
+// 匹配文字识别条件
+utilsObj.matchingAnalysisChart = (totalRelation, relation, analysisChartArr, img) => {
+    // 匹配数量
+    let matchingCount = 0;
+    if (!analysisChartArr || !analysisChartArr.length) {
+        // 总映射关系为且时，匹配条件为空，默认为true     总映射关系为或时，匹配条件为空，默认为false
+        return totalRelation === "and";
+    }
+    for (let i = 0; i < analysisChartArr.length; i++) {
+        let item = analysisChartArr[i]
+        // 获取坐标
+        let position = item["position"]
+        // 获取匹配内容
+        let matchingContext = item["context"]
+        // 获取阈值
+        let threshold = item["threshold"] || 100
+        // 获取最大值
+        let maxVal = item["maxVal"] || 255
+        // 匹配类型
+        let matchingType = item["matchingType"] || "contains"
+        // 绘图信息
+        let canvasMsg = item["canvasMsg"] || ""
+        // 是否开启灰度化
+        let isOpenGray = item["isOpenGray"] === 1
+        // 是否开启阈值化
+        let isOpenThreshold = item["isOpenThreshold"] === 1
+
+
+        if (commonStorage.get('debugModel')) {
+            console.log("【OCR目标值】", matchingContext)
+        }
+        // 灰度化、阈值化区域识别文字
+        let resultContent = utilsObj.regionalAnalysisChart2(img, position[0], position[1], position[2], position[3], threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg)
+        // 包含 或者 相等
+        if ((matchingType === "contains" && resultContent.indexOf(matchingContext) !== -1) || (matchingType === "equals" && resultContent === matchingContext)) {
+            // 累计匹配数量
+            matchingCount += 1
+            // 或者关系
+            if ("or" === relation) {
+                // 跳出循环
+                break;
+            }
+        }
+    }
+    // 并且关系
+    if ("and" === relation) {
+        return analysisChartArr.length === matchingCount
+        // 或者关系
+    } else if ("or" === relation) {
+        return matchingCount >= 1
+    } else {
+        return false;
+    }
+}
+
+
+
+/**
+ * 获取业务操作参数
+ * @param {*} pageName 页面名称
+ * @param {*} operateSymbol 操作标志
+ */
+utilsObj.getServiceOperateParam = (pageName, operateSymbol) => {
+    // 获取页面参数
+    let pageParam = commonConstant.serviceOperateParam[pageName];
+    // 获取业务参数
+    let serviceParam = pageParam ? pageParam[operateSymbol] : null
+    // 未取到业务参数直接返回
+    if (!serviceParam) {
+        return null;
+    }
+    // 获取分辨率对应的值
+    let serviceParamObj = serviceParam[device.width + "_" + device.height]
+    // 未适配当前设备 则读取标准的
+    serviceParamObj = serviceParamObj || serviceParamObj[config.screenWidth + "_" + config.screenHeight]
+    return serviceParamObj;
+}
+
 
 /**
  * 自定义消息气泡
@@ -539,19 +828,13 @@ utilsObj.uploadFileToServer = (localPath, fileName, callback) => {
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
  * @param {String} localImageName  要保存的本地图片名称
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @returns {String} remoteImageUrl 远程图片地址
  */
 utilsObj.remoteClipGrayscaleAndThresholdToServer = (x1, y1, x2, y2, threshold, maxVal, localImageName, isOpenGray, isOpenThreshold) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 调用本地裁剪以及灰度化阈值化处理图片方法  返回本地图片路径
     let localPathName = utilsObj.generateClipImgGrayThresholdToLocal(xy1["x"], xy1["y"], xy2["x"], xy2["y"], threshold, maxVal, localImageName, isOpenGray, isOpenThreshold)
     if (commonStorage.get("debugModel")) {
@@ -575,8 +858,8 @@ utilsObj.remoteClipGrayscaleAndThresholdToServer = (x1, y1, x2, y2, threshold, m
  * @param {int} y2 区域坐标y2
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  */
 utilsObj.remoteClipGrayscaleAndThresholdAnalysisChartToServer = (x1, y1, x2, y2, threshold, maxVal, localImageName, isOpenGray, isOpenThreshold) => {
     // 初始化、
@@ -643,6 +926,8 @@ utilsObj.remoteRestartScript = (restartType) => {
     events.broadcast.emit("restartScript", restartType);
 }
 
+
+
 /**
  * 远程处理操作
  * @param {String} message base64加密后的json字符串
@@ -687,14 +972,6 @@ utilsObj.remoteHandler = (message) => {
  * 获取转换系数
  */
 utilsObj.getConvertCoefficient = () => {
-    // 是否开启标准分辨率转换
-    let standardConvert = commonStorage.get('standardConvert') || false
-    if(!standardConvert){
-        return {
-            x: 1,
-            y: 1
-        }
-    }
     // 获取设备配置的分辨率
     let curScreenWith = device.width
     let curScreenHeight = device.height
@@ -781,7 +1058,7 @@ utilsObj.convertCompatible = (x1, y1, x2, y2) => {
  * @param {*} targetImg 
  * @returns 
  */
-utilsObj.sacleSmallImg = (targetImg) => {
+utilsObj.scaleSmallImg = (targetImg) => {
     // 非标准分辨率 压缩小图
     if (!utilsObj.getIsStandard()) {
         // 获取转换系数
@@ -791,7 +1068,8 @@ utilsObj.sacleSmallImg = (targetImg) => {
         // 回收图片
         return smallTargetImg;
     }
-    return targetImg
+    // 返回复制的图片
+    return images.copy(targetImg)
 
     /*  // 目录
          files.createWithDirs("/sdcard/autoJsAfterImg/")
@@ -810,40 +1088,80 @@ utilsObj.sacleSmallImg = (targetImg) => {
  * @desc 用于转换不同分辨率下的x y值
  * @param {int} x 当前x坐标
  * @param {int} y 当前y坐标
+ * @param {String} location 坐标位置
  * @returns {x:int,y:int} 转换后的坐标
  */
-utilsObj.convertXY = (x, y) => {
+utilsObj.convertXY = (x, y, location) => {
     let cofficient = utilsObj.getConvertCoefficient();
     let result = { x: Math.round(x * cofficient.x), y: Math.round(y * cofficient.y) }
+    // 标准分辨率下 直接返回
+    if (utilsObj.getIsStandard()) {
+        return result;
+    }
+    // x轴最大值  竖屏为宽度  横屏为高度
+    let xMax = utilsObj.getOrientation() === 1 ? utilsObj.getScreenWidth() : utilsObj.getScreenHeight()
+    // y轴最大值  竖屏为高度 横屏为宽度
+    let yMax = utilsObj.getOrientation() === 1 ? utilsObj.getScreenHeight() : utilsObj.getScreenWidth()
+
+    // 获取坐标偏移系数
+ /*    let positionOffset = commonConstant.positionOffset[device.width + "_" + device.height]
+    if (!positionOffset) {
+        // 如果当前设备分辨率对应的偏移系数未设置 则取标准的
+        positionOffset = commonConstant.positionOffset[config.screenWidth + "_" + config.screenHeight]
+    }
+ */
+    let x偏移系数 = commonStorage.get("x偏移系数") || 0
+    let y偏移系数 = commonStorage.get("y偏移系数") || 0
+    // 变化值
+    let widthChangeVal = (xMax / 2) * (x偏移系数 / 100)
+    let heightChangeVal = (yMax / 2) * (y偏移系数 / 100)
+
+    // 左上角的点
+    if (location === "leftTop") {
+        // x轴变化值
+        let xChange = widthChangeVal
+        // y轴变化值
+        let yChange = heightChangeVal
+        // 坐标1的x轴 减少一个值 最小为0
+        if (result.x < xChange) {
+            result.x = 0
+        } else {
+            result.x = result.x - xChange
+        }
+
+        // 坐标1的y轴 减少一个值 最小为0
+        if (result.y < yChange) {
+            result.y = 0
+        } else {
+            result.y = y - yChange
+        }
+    }
+
+    // 右下角的点
+    if (location === "rightBottom") {
+         // x轴变化值
+         let xChange = widthChangeVal
+         // y轴变化值
+         let yChange = heightChangeVal
+        // 坐标2的x轴 加上一个值 最大为x轴最大值
+        if (xMax - result.x < xChange) {
+            result.x = xMax
+        } else {
+            result.x = result.x + xChange
+        }
+
+        // 坐标2的y轴 加上一个值 最大为y轴最大值
+        if (yMax - result.y < yChange) {
+            result.y = yMax
+        } else {
+            result.y = result.y + yChange
+        }
+    }
     return result
 }
 
-
+/* 
 utilsObj.testYBjz = (isLocalImage, pathName, x1, y1, x2, y2, threadshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold) => {
-    /* console.log('testYBjz')
-    threads.start(() => {
-        press(966, 765, 15000)
-    })
-
-    // 读取临时图片
-    let tempImg1 = images.read('./res/佣兵卷轴.png')
-    sleep(1000)
-    let screen = captureScreen()
-    images.save(screen, '/sdcard/abc.png', "png", 100);
-    for (let i = 0; i < 1; i++) {
-        let result = utilsObj.detectFeaturesScale(screen, tempImg1)
-        console.log(result)
-
-        if (result) {
-            let img2 = captureScreen()
-            let topLeft = result.topLeft
-            let bottomLeft = result.bottomLeft
-            let str = utilsObj.regionalAnalysisChartSourceImg(img2, topLeft.x, topLeft.y - 10, topLeft.x + 450, bottomLeft.y - 32)
-            console.log(str)
-        }
-    }
-    screen.recycle()
-    tempImg1.recycle() */
     console.log("开始执行")
     // 截全屏
     let img = captureScreen();
@@ -869,7 +1187,7 @@ utilsObj.test2 = (pathName, x1, y1, x2, y2, threshold, maxVal, bigScale, smallSc
     utilsObj.recycleNull(img);
     utilsObj.recycleNull(targetImg);
     console.log("结束执行")
-}
+} */
 
 /**
  * 图片进行特征匹配
@@ -901,7 +1219,6 @@ utilsObj.detectFeaturesScale = (bigImg, smallImg, bigScale, smallScale, features
     return result;
 }
 
-
 /**
  * 灰度化阈值化特征匹配
  * @param {Image} bigImg 大图
@@ -911,8 +1228,8 @@ utilsObj.detectFeaturesScale = (bigImg, smallImg, bigScale, smallScale, features
  * @param {float} bigScale  大图缩放比例 【0.1-1】
  * @param {float} smallScale 小图缩放比例 【0.1-1】
  * @param {float} featuresThreshold 特征相似度 【0.1-1】
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {String} canvasMsg 绘制信息
  * @returns 返回中心坐标
  */
@@ -1001,27 +1318,21 @@ utilsObj.bigSmallSizeValid = (bigImg, smallImg, serviceType) => {
  * @param {float} bigScale  大图缩放比例 【0.1-1】
  * @param {float} smallScale 小图缩放比例 【0.1-1】
  * @param {float} featuresThreshold 特征相似度 【0.1-1】
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {String} canvasMsg 绘制信息
  * @returns 
  */
 utilsObj.regionalMatchingFeatures = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
 
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
 
     // 缩放小图
-    let smallTargetImg = utilsObj.sacleSmallImg(targetImg);
+    let smallTargetImg = utilsObj.scaleSmallImg(targetImg);
 
     let result = {
         "x": -1,
@@ -1062,8 +1373,6 @@ utilsObj.regionalMatchingFeatures = (img, targetImg, x1, y1, x2, y2, threshold, 
 }
 
 
-
-
 /**
  * 区域特征匹配模板图片
  * @desc 在大图的区域坐标范围内,进行灰度化阈值化处理后,寻找目标图片,并返回基于大图的匹配结果,传入回调函数处理结果
@@ -1078,10 +1387,10 @@ utilsObj.regionalMatchingFeatures = (img, targetImg, x1, y1, x2, y2, threshold, 
  * @param {float} bigScale  大图缩放比例 【0.1-1】
  * @param {float} smallScale 小图缩放比例 【0.1-1】
  * @param {float} featuresThreshold 特征相似度 【0.1-1】
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {String} canvasMsg 绘制信息
- * @return matcingResult
+ * @return frameArr
  */
 utilsObj.regionalMatchFeaturesTemplate = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, matchingCount, canvasMsg) => {
     // 结果四边形数组
@@ -1137,6 +1446,89 @@ utilsObj.regionalMatchFeaturesTemplate = (img, targetImg, x1, y1, x2, y2, thresh
     return frameArr
 }
 
+
+/**
+ * 区域特征匹配模板图片2
+ * @desc 在大图的区域坐标范围内,进行灰度化阈值化处理后,寻找目标图片,并返回基于大图的匹配结果,传入回调函数处理结果
+ * @param {Image} img 大图对象(一般为截全屏的图片对象)
+ * @param {Image} targetImg 目标图对象 
+ * @param {int} x1 区域坐标x1
+ * @param {int} y1 区域坐标y1
+ * @param {int} x2 区域坐标x2
+ * @param {int} y2 区域坐标y2
+ * @param {int} threshold 阈值化相似度
+ * @param {int} maxVal 阈值化最大值
+ * @param {float} bigScale  大图缩放比例 【0.1-1】
+ * @param {float} smallScale 小图缩放比例 【0.1-1】
+ * @param {float} featuresThreshold 特征相似度 【0.1-1】
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
+ * @param {String} canvasMsg 绘制信息
+ * @return matchingResult
+ */
+utilsObj.regionalMatchFeaturesTemplate2 = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, matchingCount, canvasMsg) => {
+    // 结果对象
+    let matchingResult = {
+        matches: []//匹配对象
+    }
+    // 封装排序方法 left top right bottom
+    matchingResult.sortBy = function (sortType) {
+        let matches = this.matches
+        if (!matches) {
+            return;
+        }
+        switch (sortType) {
+            case "left":
+                // 添加x为排序key
+                matches.forEach(item => {
+                    item.sortKey = item.point.x
+                })
+                // 以x轴坐标从小到大排序
+                this.matches = utilsObj.sortByKey(matches, 'sortKey', true)
+                break;
+            case "right":
+                // 添加x为排序key
+                matches.forEach(item => {
+                    item.sortKey = item.point.x
+                })
+                // 以x轴坐标从大到小排序
+                this.matches = utilsObj.sortByKey(matches, 'sortKey', false)
+                break;
+            case "top":
+                // 添加y为排序key
+                matches.forEach(item => {
+                    item.sortKey = item.point.y
+                })
+                // 以y轴坐标从小到大排序
+                this.matches = utilsObj.sortByKey(matches, 'sortKey', true)
+                break;
+            case "bottom":
+                // 添加y为排序key
+                matches.forEach(item => {
+                    item.sortKey = item.point.y
+                })
+                // 以y轴坐标从大到小排序
+                this.matches = utilsObj.sortByKey(matches, 'sortKey', false)
+                break;
+            default:
+        }
+    }
+    // 结果四边形数组
+    let frameArr = utilsObj.regionalMatchFeaturesTemplate(img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, matchingCount, canvasMsg);
+
+    // 将四边形数组转换为matches数组
+    if (frameArr) {
+        frameArr.forEach(frame => {
+            matchingResult.matches.push({
+                "point": {
+                    x: frame.x,
+                    y: frame.y
+                }
+            })
+        })
+    }
+    return matchingResult;
+}
 
 /**
  * 随机点击
@@ -1195,12 +1587,12 @@ utilsObj.grayscaleAndThreshold = (img, threshold, maxVal) => {
  * @param {Image} img 需要处理的图片对象
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @returns {Image} 处理后的图片对象 
  */
 utilsObj.grayscaleAndThreshold2 = (img, threshold, maxVal, isOpenGray, isOpenThreshold) => {
-    // 均为开启 直接返回复制图 TODO 返回空值
+    // 均为开启 直接返回复制图
     if (!isOpenGray && !isOpenThreshold) {
         return images.copy(img);
     }
@@ -1266,8 +1658,8 @@ utilsObj.grayThresholdFindImg = (bigImg, smallImg, threshold, maxVal, imgThresho
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
  * @param {int} imgThreshold 找图相似度
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @returns {Object} 返回找图结果 images.findImage的返回结果
  */
 utilsObj.grayThresholdFindImg2 = (bigImg, smallImg, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold) => {
@@ -1310,19 +1702,13 @@ utilsObj.grayThresholdFindImg2 = (bigImg, smallImg, threshold, maxVal, imgThresh
  * @returns {x:int,y:int} 找图坐标对象
  */
 utilsObj.regionalFindImg = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, canvasMsg) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
     // 缩放小图
-    let smallTargetImg = utilsObj.sacleSmallImg(targetImg);
+    let smallTargetImg = utilsObj.scaleSmallImg(targetImg);
     // 调用灰度化阈值化找图 在大图中找小图
     let findResult = utilsObj.grayThresholdFindImg(clipImg, smallTargetImg, threshold, maxVal, imgThreshold)
     // 回收裁剪图片
@@ -1357,27 +1743,21 @@ utilsObj.regionalFindImg = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, i
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
  * @param {int} imgThreshold 图片相似度
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {String} canvasMsg 绘制消息
  * @returns {x:int,y:int} 找图坐标对象
  */
 utilsObj.regionalFindImg2 = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
 
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
 
     // 缩放小图
-    let smallTargetImg = utilsObj.sacleSmallImg(targetImg);
+    let smallTargetImg = utilsObj.scaleSmallImg(targetImg);
 
     // 调用灰度化阈值化找图 在大图中找小图
     let findResult = utilsObj.grayThresholdFindImg2(clipImg, smallTargetImg, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold, canvasMsg)
@@ -1557,8 +1937,8 @@ utilsObj.regionalClickImg = (img, x1, y1, x2, y2, threshold, maxVal, matchingImg
  * @param {int} maxVal 阈值化最大值
  * @param {String} matchingImgPath 匹配图片路径
  * @param {String} imgThreshold 图片相似度
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {Function} successCall 成功回调
  */
 utilsObj.regionalClickImg2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingImgPath, imgThreshold, isOpenGray, isOpenThreshold, successCall) => {
@@ -1591,23 +1971,23 @@ utilsObj.regionalClickImg2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingIm
  * @param {float} bigScale  大图缩放比例 【0.1-1】
  * @param {float} smallScale 小图缩放比例 【0.1-1】
  * @param {float} featuresThreshold 特征相似度 【0.1-1】
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {*} successCall 成功回调
  */
- utilsObj.regionalClickFeatures = (img, x1, y1, x2, y2, threshold, maxVal, matchingImgPath, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, successCall) => {
+utilsObj.regionalClickFeatures = (img, x1, y1, x2, y2, threshold, maxVal, matchingImgPath, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, successCall) => {
     // 读取临时图片
     let targetImg = utilsObj.includesContains(['http:', 'https:'], matchingImgPath) ? images.load(matchingImgPath) : images.read(matchingImgPath);
-     // 进行一次匹配
-     let macthingXy = utilsObj.regionalMatchingFeatures(img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold)
-     utilsObj.recycleNull(img);
-     utilsObj.recycleNull(targetImg);
-     if (macthingXy && macthingXy.x !== -1) {
-         utilsObj.randomClick(macthingXy.x, macthingXy.y, 1, false);
-         if (successCall) {
-             successCall()
-         }
-     }
+    // 进行一次匹配
+    let macthingXy = utilsObj.regionalMatchingFeatures(img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold)
+    utilsObj.recycleNull(img);
+    utilsObj.recycleNull(targetImg);
+    if (macthingXy && macthingXy.x !== -1) {
+        utilsObj.randomClick(macthingXy.x, macthingXy.y, 1, false);
+        if (successCall) {
+            successCall()
+        }
+    }
 }
 
 
@@ -1637,16 +2017,10 @@ utilsObj.regionalClickImg2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingIm
  * worst()取最低匹配结果
  * sortBy(cmp)匹配结果位置排序 指定方向 top-left 从上到下 从左到右
  */
-utilsObj.regionalMatchTemplate = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, canvasMsg) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
+utilsObj.regionalMatchTemplate = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask) => {
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
 
@@ -1666,7 +2040,7 @@ utilsObj.regionalMatchTemplate = (img, targetImg, x1, y1, x2, y2, threshold, max
     let tempImg = images.read(tempImgPath)
 
     // 缩放小图
-    let smallTargetImg = utilsObj.sacleSmallImg(targetImg);
+    let smallTargetImg = utilsObj.scaleSmallImg(targetImg);
 
 
     // 校验图片尺寸
@@ -1706,10 +2080,39 @@ utilsObj.regionalMatchTemplate = (img, targetImg, x1, y1, x2, y2, threshold, max
     return matchingResult
 }
 
+/**
+ * 区域找图或者特征匹配
+ * @param {Image} img 大图对象(一般为截全屏的图片对象)
+ * @param {Image} targetImg 目标图对象
+ * @param {int} x1 区域坐标x1
+ * @param {int} y1 区域坐标y1
+ * @param {int} x2 区域坐标x2
+ * @param {int} y2 区域坐标y2
+ * @param {int} threshold 阈值化相似度
+ * @param {int} maxVal 阈值化最大值
+ * @param {int} imgThreshold 图片相似度
+ * @param {float} bigScale  大图缩放比例 【0.1-1】
+ * @param {float} smallScale 小图缩放比例 【0.1-1】
+ * @param {float} featuresThreshold 特征相似度 【0.1-1】
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
+ * @param {*} canvasMsg 
+ */
+utilsObj.regionalFindImgOrFeatures = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
+    // 标准分辨率下进行找图  否则进行特征匹配
+    let isStandard = utilsObj.getIsStandard()
+    if (isStandard) {
+        // 区域找图
+        return utilsObj.regionalFindImg2(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold, canvasMsg)
+    } else {
+        // 区域特征匹配
+        return utilsObj.regionalMatchingFeatures(img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg)
+    }
+}
 
 /**
  * 区域获取匹配图片2
- * @desc 在大图的区域坐标范围内,进行灰度化阈值化处理后,寻找目标图片,并返回基于大图的匹配结果最多5个,传入回调函数处理结果
+ * @desc 在大图的区域坐标范围内,进行灰度化阈值化处理后,寻找目标图片,并返回基于大图的匹配结果,传入回调函数处理结果
  * @param {Image} img 大图对象(一般为截全屏的图片对象)
  * @param {Image} targetImg 目标图对象 
  * @param {int} x1 区域坐标x1
@@ -1721,8 +2124,8 @@ utilsObj.regionalMatchTemplate = (img, targetImg, x1, y1, x2, y2, threshold, max
  * @param {int} imgThreshold 图片相似度
  * @param {int} matchingCount 匹配数量
  * @param {Boolean} transparentMask 是否开启透明模板找图
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {String} canvasMsg 绘图消息
  * @return matcingResult
  * first()取第一个匹配结果
@@ -1736,15 +2139,9 @@ utilsObj.regionalMatchTemplate = (img, targetImg, x1, y1, x2, y2, threshold, max
  * sortBy(cmp)匹配结果位置排序 指定方向 top-left 从上到下 从左到右
  */
 utilsObj.regionalMatchTemplate2 = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, isOpenGray, isOpenThreshold, canvasMsg) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
 
@@ -1764,7 +2161,7 @@ utilsObj.regionalMatchTemplate2 = (img, targetImg, x1, y1, x2, y2, threshold, ma
     let tempImg = images.read(tempImgPath)
 
     // 缩放小图
-    let smallTargetImg = utilsObj.sacleSmallImg(targetImg);
+    let smallTargetImg = utilsObj.scaleSmallImg(targetImg);
 
 
     // 校验图片尺寸
@@ -1806,6 +2203,39 @@ utilsObj.regionalMatchTemplate2 = (img, targetImg, x1, y1, x2, y2, threshold, ma
 
 
 /**
+ * 区域模板匹配或者特征匹配模板
+ * @param {Image} img 大图对象(一般为截全屏的图片对象)
+ * @param {Image} targetImg 目标图对象 
+ * @param {int} x1 区域坐标x1
+ * @param {int} y1 区域坐标y1
+ * @param {int} x2 区域坐标x2
+ * @param {int} y2 区域坐标y2
+ * @param {int} threshold 阈值化相似度
+ * @param {int} maxVal 阈值化最大值
+ * @param {int} imgThreshold 图片相似度
+ * @param {int} matchingCount 匹配数量
+ * @param {Boolean} transparentMask 是否开启透明模板找图
+ * @param {float} bigScale  大图缩放比例 【0.1-1】
+ * @param {float} smallScale 小图缩放比例 【0.1-1】
+ * @param {float} featuresThreshold 特征相似度 【0.1-1】
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
+ * @param {String} canvasMsg 绘制信息
+ * @returns 
+ */
+utilsObj.regionalMatchTemplateOrMatchFeatures = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
+    // 标准分辨率
+    let isStandard = utilsObj.getIsStandard();
+    if (isStandard) {
+        // 区域特征匹配
+        return utilsObj.regionalMatchTemplate2(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, isOpenGray, isOpenThreshold, canvasMsg);
+    } else {
+        // 区域特征匹配模板
+        return utilsObj.regionalMatchFeaturesTemplate2(img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, matchingCount, canvasMsg)
+    }
+}
+
+/**
  * 区域灰度化阈值化找圆
  * @param {Image} img 大图对象(一般为截全屏的图片对象)
  * @param {int} x1 区域坐标x1
@@ -1816,15 +2246,9 @@ utilsObj.regionalMatchTemplate2 = (img, targetImg, x1, y1, x2, y2, threshold, ma
  * @param {int} maxVal 阈值化最大值
  */
 utilsObj.regionalFindCircles = (img, x1, y1, x2, y2, threshold, maxVal) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
     // 灰度化、阈值化图片
@@ -1869,19 +2293,13 @@ utilsObj.regionalFindCircles = (img, x1, y1, x2, y2, threshold, maxVal) => {
  * @param {int} y2 区域坐标y2
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  */
 utilsObj.regionalFindCircles2 = (img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
     // 灰度化、阈值化图片
@@ -1927,8 +2345,8 @@ utilsObj.regionalFindCircles2 = (img, x1, y1, x2, y2, threshold, maxVal, isOpenG
  * @param {int} y2 区域坐标y2
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @returns {Image} 返回处理后的图片对象
  */
 utilsObj.generateClipImgGrayThreshold = (x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold) => {
@@ -1957,8 +2375,8 @@ utilsObj.generateClipImgGrayThreshold = (x1, y1, x2, y2, threshold, maxVal, isOp
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
  * @param {String} localImageName  要保存的本地图片名称
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @returns {String} 本地图片路径
  */
 utilsObj.generateClipImgGrayThresholdToLocal = (x1, y1, x2, y2, threshold, maxVal, localImageName, isOpenGray, isOpenThreshold) => {
@@ -2015,8 +2433,8 @@ utilsObj.grayThresholdFindMultipleColor = (bigImg, threshold, maxVal, color, col
  * @param {string} color 目标颜色值(第一个点的颜色值)
  * @param {Array} colorOther 其他颜色数组 例如：[[35, 30, "#FFFFFF"], [-28, -2, "#000000"], [-23, 20, "#000000"]]
  * @param {int} colorThreshold 颜色相似度
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @returns {Object} 返回找色结果 images.findMultiColors的返回结果
  */
 utilsObj.grayThresholdFindMultipleColor2 = (bigImg, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold) => {
@@ -2057,15 +2475,9 @@ utilsObj.grayThresholdFindMultipleColor2 = (bigImg, threshold, maxVal, color, co
  * @returns {x:int,y:int} 找色坐标对象
  */
 utilsObj.regionalFindMultipleColor = (img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, canvasMsg) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
     // 灰度化、阈值化多点找色
@@ -2095,21 +2507,15 @@ utilsObj.regionalFindMultipleColor = (img, x1, y1, x2, y2, threshold, maxVal, co
  * @param {String} color 目标颜色值(第一个点的颜色值)
  * @param {Array} colorOther 其他颜色数组 例如：[[35, 30, "#FFFFFF"], [-28, -2, "#000000"], [-23, 20, "#000000"]]
  * @param  {int} colorThreshold 颜色相似度
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {String} canvasMsg 绘图消息
  * @returns {x:int,y:int} 找色坐标对象
  */
 utilsObj.regionalFindMultipleColor2 = (img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
     // 灰度化、阈值化多点找色
@@ -2120,9 +2526,9 @@ utilsObj.regionalFindMultipleColor2 = (img, x1, y1, x2, y2, threshold, maxVal, c
         "x": findResult ? (xy1["x"] + findResult["x"]) : -1,
         "y": findResult ? (xy1["y"] + findResult["y"]) : -1
     }
-    if(result.x !== -1){
+    if (result.x !== -1) {
         // 绘制方框
-        utilsObj.canvasRect(result["x"], result["y"], result["x"]+20, result["y"]+10, "color", "【区域找色第一个点】" + (canvasMsg || "") + (result.x === -1 ? "【未找到】" : "【已找到】"));
+        utilsObj.canvasRect(result["x"], result["y"], result["x"] + 20, result["y"] + 10, "color", "【区域找色第一个点】" + (canvasMsg || "") + (result.x === -1 ? "【未找到】" : "【已找到】"));
     }
     // 绘制方框
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "color", "【区域找色结果】" + (canvasMsg || "") + (result.x === -1 ? "【未找到】" : "【已找到】"));
@@ -2143,11 +2549,11 @@ utilsObj.regionalFindMultipleColor2 = (img, x1, y1, x2, y2, threshold, maxVal, c
  * @param {String} color 目标颜色值(第一个点的颜色值)
  * @param {Array} colorOther 其他颜色数组 例如：[[35, 30, "#FFFFFF"], [-28, -2, "#000000"], [-23, 20, "#000000"]]
  * @param  {int} colorThreshold 颜色相似度
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {Function} successCall 成功回调
  */
- utilsObj.regionalClickColor2 = (img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, successCall) => {
+utilsObj.regionalClickColor2 = (img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, successCall) => {
     // 灰度化、阈值化区域识别文字获取坐标
     let macthingXy = utilsObj.regionalFindMultipleColor2(img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold)
     if (macthingXy) {
@@ -2173,15 +2579,9 @@ utilsObj.regionalFindMultipleColor2 = (img, x1, y1, x2, y2, threshold, maxVal, c
  * @returns {Array} 文字识别内容
  */
 utilsObj.regionalAnalysisChart = (img, x1, y1, x2, y2, threshold, maxVal, canvasMsg) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
 
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
@@ -2228,23 +2628,15 @@ utilsObj.getIsStandard = () => {
  * @param {int} y2 区域坐标y2
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {String} canvasMsg 绘制消息
  * @returns {Array} 文字识别内容
  */
 utilsObj.regionalAnalysisChart2 = (img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg) => {
-
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
-
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
 
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
@@ -2277,15 +2669,9 @@ utilsObj.regionalAnalysisChart2 = (img, x1, y1, x2, y2, threshold, maxVal, isOpe
  * @returns {Array} 文字识别内容
  */
 utilsObj.regionalAnalysisChartSourceImg = (img, x1, y1, x2, y2) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
     // 临时图片路径 
@@ -2498,15 +2884,9 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
  * @returns {x:int,y:int} 匹配文字的坐标
  */
 utilsObj.regionalAnalysisChartPostion = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
     // 灰度化、阈值化图片
@@ -2549,20 +2929,14 @@ utilsObj.regionalAnalysisChartPostion = (img, x1, y1, x2, y2, threshold, maxVal,
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
  * @param {String} matchingContent 匹配内容
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @returns {x:int,y:int} 匹配文字的坐标
  */
 utilsObj.regionalAnalysisChartPostion2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
     // 灰度化、阈值化图片
@@ -2721,19 +3095,13 @@ utilsObj.ocrGetResultToCanvas = (img, callback) => {
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
  * @param {String} localImageName 本地图片路径
- * @param {int} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenGray 是否开启灰度化
  * @param {*} isOpenThreshold 是否开启阈值化
  */
 utilsObj.regionalAnalysisChartToCanvasImg = (img, x1, y1, x2, y2, threshold, maxVal, localImageName, isOpenGray, isOpenThreshold) => {
-    // 获取转换坐标
-    let convertResult = utilsObj.convertCompatible(x1, y1, x2, y2)
-    x1 = convertResult.x1
-    y1 = convertResult.y1
-    x2 = convertResult.x2
-    y2 = convertResult.y2
     // 坐标转换
-    let xy1 = utilsObj.convertXY(x1, y1)
-    let xy2 = utilsObj.convertXY(x2, y2)
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
     // 按照区域坐标裁剪大图
     let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
 
@@ -2798,8 +3166,8 @@ utilsObj.regionalClickText = (img, x1, y1, x2, y2, threshold, maxVal, matchingCo
  * @param {int} threshold 阈值化相似度
  * @param {int} maxVal 阈值化最大值
  * @param {String} matchingContent 匹配内容
- * @param {int} isOpenGray 是否开启灰度化
- * @param {int} isOpenThreshold 是否开启阈值化
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {Function} successCall 成功回调
  */
 utilsObj.regionalClickText2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall) => {
@@ -3020,4 +3388,97 @@ utilsObj.getUICacheData = (settingkeyArr, storageObj) => {
 
     })
 }
+
+
+// 获取 当前页面设置信息 数组
+utilsObj.getCurPageStting = (select业务) => {
+    let curPageSetting = {}
+    // 获取原始页面匹配对象
+    let pageSetting = commonConstant["pageSetting_" + select业务] || {}
+    // 收集key
+    let keys = Object.keys(pageSetting);
+    keys.forEach(key => {
+        // 读取配置 
+        let obj = pageSetting[key]
+        // 获取分辨率对应的值
+        let pageSetingObj = obj[device.width + "_" + device.height]
+        // 未适配当前设备 则读取标准的
+        pageSetingObj = pageSetingObj || obj[config.screenWidth + "_" + config.screenHeight]
+        // 重新写入配置
+        curPageSetting[key] = pageSetingObj
+    })
+    // 返回配置项
+    return curPageSetting;
+}
+
+// 获取 当前页面设置信息 key数组
+utilsObj.getCurPageSettingKey = (select业务) => {
+    // 获取原始页面匹配对象
+    let pageSetting = commonConstant["pageSetting_" + select业务] || {}
+    // 返回key
+    return Object.keys(pageSetting);
+}
+
+
+/**
+ * 获取调试页面设置
+ */
+utilsObj.getDebugPageSettingUICache = () => {
+    let debugModel = commonStorage.get("debugModel")
+    if (debugModel) {
+        // 初始化
+        ui["debugSleep"].attr("text", commonStorage.get("debugSleep") || "")
+        let joinSettingKey = []
+        let select业务 = commonStorage.get("select业务") || "体力"
+        // 参与匹配的全部key
+        let joinMatchingPageKey = utilsObj.getCurPageSettingKey(select业务)
+        joinMatchingPageKey.forEach(item => {
+            joinSettingKey.push({ key: "debugPage_" + item, type: "复选框" })
+        })
+        // 读取调试页面缓存数据
+        utilsObj.getUICacheData(joinSettingKey, commonStorage)
+    }
+}
+
+/**
+ * 设置调试页面设置
+ */
+utilsObj.setDebugPageSettingUICache = () => {
+    let debugModel = commonStorage.get("debugModel")
+    if (debugModel) {
+        // 初始化
+        let joinSettingKey = []
+        let select业务 = commonStorage.get("select业务") || "体力"
+        // 参与匹配的key
+        let joinMatchingPageKey = utilsObj.getCurPageSettingKey(select业务)
+        joinMatchingPageKey.forEach(item => {
+            joinSettingKey.push({ key: "debugPage_" + item, type: "复选框" })
+        })
+        // 设置调试页面缓存数据
+        utilsObj.setUICacheData(joinSettingKey, commonStorage)
+    }
+}
+
+
+/**
+ * 获取参与匹配的页面
+ */
+utilsObj.getJoinMatchingPageKey = () => {
+    let debugModel = commonStorage.get("debugModel")
+    let select业务 = commonStorage.get("select业务") || "体力"
+    // 参与匹配的key
+    let joinMatchingPageKey = utilsObj.getCurPageSettingKey(select业务)
+    if (debugModel) {
+        // 初始化
+        let joinSettingKey = []
+        joinSettingKey = joinMatchingPageKey.filter(item => {
+            return (commonStorage.get("debugPage_" + item) || false);
+        })
+        console.log("当前调试页面：" + joinSettingKey)
+        return joinSettingKey;
+    } else {
+        return joinMatchingPageKey;
+    }
+}
+
 module.exports = utilsObj

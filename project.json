@@ -26,8 +26,8 @@
 	},
 	"packageName": "com.zjh336.cn.tools",
 	"scripts": {},
-	"versionCode": 1300,
-	"versionName": "1.3.0",
+	"versionCode": 1400,
+	"versionName": "1.4.0",
 	"icon": "images/ic_app_logo.png",
 	"publish": {
 		"category": "实用工具",

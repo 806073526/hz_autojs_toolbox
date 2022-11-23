@@ -30,6 +30,10 @@ ui.layout(
                                         <text text="设备UUID:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
                                         <text id="设备UUID" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
                                     </horizontal>
+                                    <horizontal h="80px">
+                                        <text text="当前版本号:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
+                                        <text id="当前版本号" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
+                                    </horizontal>
                                 </vertical>
                             </card>
                         </vertical>
@@ -102,6 +106,9 @@ ui["屏幕宽度"].attr("text", device.width)
 ui["屏幕高度"].attr("text", device.height)
 ui["DPI"].attr("text", densityDpi)
 
+// 当前版本信息
+let curVersionName = app.versionName
+ui["当前版本号"].attr("text", curVersionName)
 
 // 初始化ui设置
 function initUiSetting() {
@@ -113,6 +120,10 @@ function initUiSetting() {
                 <horizontal h="80px">
                     <text text="服务端IP:" textSize="16sp"  h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="服务端IP" inputType="text" hint="请输入服务端ip" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
+                </horizontal>
+                <horizontal h="80px">
+                    <text text="访问密码:" textSize="16sp"  h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <input id="访问密码" inputType="text" hint="WEB端操作设备所需" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="80px">
                     <text text="ws日志:" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
@@ -292,8 +303,23 @@ threads.start(() => {
         console.error("错误", error)
     }
 })
-
-
+// 监听广播
+var receiver = new JavaAdapter(android.content.BroadcastReceiver, {
+    onReceive: function (context, intent) {
+        switch (intent.action) {
+            case Intent.ACTION_CONFIGURATION_CHANGED:
+                events.broadcast.emit("orientationchange",'');
+                break;
+        }
+    },
+});                                                                                 
+var filter = new IntentFilter();
+// 屏幕旋转
+filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);    
+context.registerReceiver(receiver, filter);
+events.on("exit", function () {
+    receiver && context.unregisterReceiver(receiver);
+});
 
 //保持脚本运行
 setInterval(() => { }, 1000);

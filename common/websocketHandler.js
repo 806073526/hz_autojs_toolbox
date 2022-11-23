@@ -56,6 +56,31 @@ events.on('exit', () => {
 });
 
 let websocketHandler = {}
+events.broadcast.on("orientationchange", function () {
+  console.log("屏幕方向变化")
+  // 重新发送消息到服务端
+  sendDeviceToServer()
+});
+
+// 发送消息到服务端
+function sendDeviceToServer(){
+  // 其他属性
+  let otherProperty = {
+    orientation: utils.getOrientation()
+  }
+  let otherPropertyJson = $base64.encode(JSON.stringify(otherProperty),'utf-8')
+  // 设备对象
+  let deviceObj = {
+    deviceHeight: device.height,
+    deviceWidth: device.width,
+    password: commonStorage.get("访问密码") || "",
+    otherPropertyJson:otherPropertyJson
+  }
+  let base64Device = $base64.encode(JSON.stringify(deviceObj),'utf-8')
+  // 发送版本号
+  socketTask.send('{"action":"sendDeviceInfo","message":"' + base64Device + '"}')
+}
+
 // 初始化
 websocketHandler.initWebSocket = () => {
   let deviceUUID = commonStorage.get('deviceUUID')
@@ -85,6 +110,8 @@ websocketHandler.initWebSocket = () => {
       clearInterval(reConnectTimer)
     }
     reConnectTimer = null
+    // 发送消息到服务端
+    sendDeviceToServer()
   })
   // 监听到错误异常 
   socketTask.on("failure", (err, res, ws) => {
@@ -152,13 +179,8 @@ websocketHandler.startHeart = () => {
     socketTask.send(fixedMessageEnum['ping'].toString())
 
 
-    let deviceObj = {
-      deviceHeight: device.height,
-      deviceWidth: device.width
-    }
-    let base64Device = $base64.encode(JSON.stringify(deviceObj),'utf-8')
-    // 发送版本号
-    socketTask.send('{"action":"sendDeviceInfo","message":"' + base64Device + '"}')
+   // 每次心跳 更新消息到服务端
+   sendDeviceToServer()
   }, webSocketConfig.heartTime)
 }
 // 清除心跳

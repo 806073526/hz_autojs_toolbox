@@ -101,9 +101,7 @@ try {
     images.stopScreenCapture()
     images.requestScreenCapture()
 } catch (error) {
-    if (commonStorage.get('debugModel')) {
         console.error("主程序请求截图错误", error)
-    }
 }
 //保持脚本运行
 setInterval(() => { }, 1000);
