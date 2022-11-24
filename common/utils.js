@@ -1415,9 +1415,9 @@ utilsObj.regionalMatchFeaturesTemplate = (img, targetImg, x1, y1, x2, y2, thresh
             let convertAfterXy1 = objResult.convertAfterXy1
             // 回收大图
             utilsObj.recycleNull(bigImg);
-            bigImg = images.read(tempImgPath1);
+            let bigImg2 = images.read(tempImgPath1);
             // 创建canvas读取图片
-            let canvas = new Canvas(bigImg);
+            let canvas = new Canvas(bigImg2);
             let rectanglePaint = new Paint();
             rectanglePaint.setStrokeWidth(3);
             rectanglePaint.setColor(colors.parseColor("#00ff00"));
@@ -1433,7 +1433,7 @@ utilsObj.regionalMatchFeaturesTemplate = (img, targetImg, x1, y1, x2, y2, thresh
             // 回收绘图
             utilsObj.recycleNull(canvasImg);
             // 回收大图
-            utilsObj.recycleNull(bigImg);
+            utilsObj.recycleNull(bigImg2);
         } else {
             // 回收大图
             utilsObj.recycleNull(bigImg);
@@ -2883,7 +2883,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
  * @param {String} matchingContent 匹配内容
  * @returns {x:int,y:int} 匹配文字的坐标
  */
-utilsObj.regionalAnalysisChartPostion = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent) => {
+utilsObj.regionalAnalysisChartPosition = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent) => {
     // 坐标转换
     let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
     let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
@@ -2933,7 +2933,7 @@ utilsObj.regionalAnalysisChartPostion = (img, x1, y1, x2, y2, threshold, maxVal,
  * @param {boolean} isOpenThreshold 是否开启阈值化
  * @returns {x:int,y:int} 匹配文字的坐标
  */
-utilsObj.regionalAnalysisChartPostion2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold) => {
+utilsObj.regionalAnalysisChartPosition2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold) => {
     // 坐标转换
     let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
     let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
@@ -3144,7 +3144,7 @@ utilsObj.regionalAnalysisChartToCanvasImg = (img, x1, y1, x2, y2, threshold, max
  */
 utilsObj.regionalClickText = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, successCall) => {
     // 灰度化、阈值化区域识别文字获取坐标
-    let macthingXy = utilsObj.regionalAnalysisChartPostion(img, x1, y1, x2, y2, threshold, maxVal, matchingContent)
+    let macthingXy = utilsObj.regionalAnalysisChartPosition(img, x1, y1, x2, y2, threshold, maxVal, matchingContent)
     if (macthingXy) {
         utilsObj.randomClick(macthingXy.x, macthingXy.y, 1, false);
         if (successCall) {
@@ -3172,7 +3172,7 @@ utilsObj.regionalClickText = (img, x1, y1, x2, y2, threshold, maxVal, matchingCo
  */
 utilsObj.regionalClickText2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall) => {
     // 灰度化、阈值化区域识别文字获取坐标
-    let macthingXy = utilsObj.regionalAnalysisChartPostion2(img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold)
+    let macthingXy = utilsObj.regionalAnalysisChartPosition2(img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold)
     if (macthingXy) {
         utilsObj.randomClick(macthingXy.x, macthingXy.y, 1, false);
         if (successCall) {
