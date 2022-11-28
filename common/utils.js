@@ -1104,12 +1104,12 @@ utilsObj.convertXY = (x, y, location) => {
     let yMax = utilsObj.getOrientation() === 1 ? utilsObj.getScreenHeight() : utilsObj.getScreenWidth()
 
     // 获取坐标偏移系数
- /*    let positionOffset = commonConstant.positionOffset[device.width + "_" + device.height]
-    if (!positionOffset) {
-        // 如果当前设备分辨率对应的偏移系数未设置 则取标准的
-        positionOffset = commonConstant.positionOffset[config.screenWidth + "_" + config.screenHeight]
-    }
- */
+    /*    let positionOffset = commonConstant.positionOffset[device.width + "_" + device.height]
+       if (!positionOffset) {
+           // 如果当前设备分辨率对应的偏移系数未设置 则取标准的
+           positionOffset = commonConstant.positionOffset[config.screenWidth + "_" + config.screenHeight]
+       }
+    */
     let x偏移系数 = commonStorage.get("x偏移系数") || 0
     let y偏移系数 = commonStorage.get("y偏移系数") || 0
     // 变化值
@@ -1139,10 +1139,10 @@ utilsObj.convertXY = (x, y, location) => {
 
     // 右下角的点
     if (location === "rightBottom") {
-         // x轴变化值
-         let xChange = widthChangeVal
-         // y轴变化值
-         let yChange = heightChangeVal
+        // x轴变化值
+        let xChange = widthChangeVal
+        // y轴变化值
+        let yChange = heightChangeVal
         // 坐标2的x轴 加上一个值 最大为x轴最大值
         if (xMax - result.x < xChange) {
             result.x = xMax
@@ -3480,5 +3480,319 @@ utilsObj.getJoinMatchingPageKey = () => {
         return joinMatchingPageKey;
     }
 }
+
+
+/**
+ * 远程限制应用布局分析
+ */
+utilsObj.remoteLimitLayoutAnalysis = ()=>{
+    // 启动应用
+    let exits = launchApp("限制应用布局分析")
+    // 本地没有应用
+    if(!exits){
+        toastLog("请下载并安装《限制应用布局分析》App")
+        // 打开下载
+        app.openUrl("http://121.4.241.250:5212/s/6o5IW")
+        return;
+    }
+    sleep(2000)
+    let img = captureScreen();
+    let orientation = utilsObj.getOrientation();
+    let width = orientation === 1 ? device.width : device.height;
+    let height = orientation === 1 ? device.height : device.width;
+    // 读取临时图片
+    let targetImg = images.read("./res/分析布局悬浮窗标志.png"); 
+    // 灰度化、阈值化区域 识别图片
+    let macthingXy = utilsObj.regionalFindImg2(img, targetImg, 0,0,width,height, 190, 255, 0.7, false, false)
+    if(macthingXy && macthingXy.x !== -1){
+        utilsObj.randomClick(macthingXy.x + 100, macthingXy.y + 70, 1, false);
+    }
+    utilsObj.recycleNull(img);
+    utilsObj.recycleNull(targetImg);
+}
+
+
+
+/**
+ * 获取根节点并写入本地文件
+ */
+utilsObj.getRootNodeWriteLocal = (nodeType) => {
+    let localNodeFile = "/sdcard/autoJsTools/rootNode.json"
+    files.ensureDir(localNodeFile)
+
+    toastLog("正在分析布局,请稍候")
+    if (nodeType === "tree") {
+        // 获取根节点
+        let rootNodeObj = utilsObj.getRootNodeByTree(true);
+        //写入文件
+        files.write(localNodeFile, JSON.stringify(rootNodeObj,'','\t'));
+    } else {
+        let nodeObjArr = utilsObj.getRootNodeByArr();
+        //写入文件
+        files.write(localNodeFile, JSON.stringify(nodeObjArr,'','\t'));
+    }
+}
+
+/**
+ * 远程上传根节点json到服务器
+ */
+utilsObj.remoteUploadRootNodeJsonToServer = () => {
+    let localPathName = "/sdcard/autoJsTools/rootNode.json"
+    // 调用远程上传文件方法
+    utilsObj.uploadFileToServer(localPathName, deviceUUID + "/" + "rootNode.json", (remoteRootURL) => {
+        if (commonStorage.get("debugModel")) {
+            console.log("远程节点地址：" + remoteRootURL)
+        }
+    })
+}
+
+
+/**
+ * 上传节点预览图片
+ */
+utilsObj.uploadNodePreviewImg = ()=>{
+    try {
+        let img = images.captureScreen()
+        let tempImgPath = '/sdcard/screenImg/nodePreviewImg.jpg'
+        // 临时图片路径
+        files.remove(tempImgPath)
+        sleep(10)
+        images.save(img, tempImgPath, "jpg", "100");
+        utils.uploadFileToServer(tempImgPath, deviceUUID + '/nodePreviewImg.jpg', (a) => {
+        })
+        img.recycle()
+    } catch (error) {
+        console.error("预览节点图片错误",error)
+    }
+}
+
+
+/**
+ * 获取根节点树形
+ * @param {*} isRemoveSouceNode 是否删除原节点
+ * @returns 
+ */
+utilsObj.getRootNodeByTree = (isRemoveSouceNode) => {
+    // 获取根节点
+    let windowRoot = auto.rootInActiveWindow;
+    if (!windowRoot) {
+        toastLog("未获取到节点,当前应用可能被限制,请尝试使用《限制应用布局分析》APP本地分析")
+        return { "msg": "未获取到节点,当前应用可能被限制,请尝试使用《限制应用布局分析》APP本地分析" }
+    }
+    // 转换根节点
+    let rootNodeObj = utilsObj.convertNodeToObj(windowRoot);
+    // 原始节点
+    rootNodeObj.sourceNode = windowRoot
+    // 递归获取子节点
+    rootNodeObj = utilsObj.recursionNode(rootNodeObj);
+    if (isRemoveSouceNode) {
+        rootNodeObj = utilsObj.recursionClearSouceNode(rootNodeObj);
+    }
+    toastLog("布局分析完成,请上传")
+    // 返回根节点
+    return rootNodeObj;
+}
+
+/**
+ * 获取根节点数组
+ */
+utilsObj.getRootNodeByArr = () => {
+    // 获取根节点
+    let windowRoot = auto.rootInActiveWindow;
+    if (!windowRoot) {
+        toastLog("未获取到节点,当前应用可能被限制")
+        return { "msg": "未获取到节点,当前应用可能被限制" }
+    }
+    let nodeArr = findViewNodes(windowRoot)
+    let objArr = []
+
+    for (let i = 0; i < nodeArr.length; i++) {
+        let obj = utilsObj.convertNodeToObj(nodeArr[i]);
+        objArr.push(obj);
+    }
+    toastLog("布局分析完成,请上传")
+    return objArr;
+}
+
+
+
+/**
+ * 递归删除原节点
+ * @param {*} childNodeObj 
+ * @returns 
+ */
+utilsObj.recursionClearSouceNode = (childNodeObj) => {
+    // 获取原始节点  
+    delete childNodeObj.sourceNode
+
+    // 获取子节点数组
+    let children = childNodeObj.children ? childNodeObj.children : []
+    for (let i = 0; i < children.length; i++) {
+        children[i] = utilsObj.recursionClearSouceNode(children[i])
+    }
+    childNodeObj.children = children;
+    return childNodeObj;
+}
+
+/**
+ * 递归获取子节点
+ * @param {} childNode 
+ * @returns 
+ */
+utilsObj.recursionNode = (childNodeObj) => {
+    // 获取原始节点  
+    let sourceNode = childNodeObj.sourceNode
+    // 获取子节点数量
+    let childCount = sourceNode.childCount();
+    // 没有子节点直接返回
+    if (childCount == null || childCount === 0) {
+        return childNodeObj;
+    }
+    // 获取子节点数组
+    let children = childNodeObj.children ? childNodeObj.children : []
+
+    for (var i = 0; i < childCount; i++) {
+        // 获取子节点
+        let childNode1 = sourceNode.child(i)
+        if (!childNode1) {
+            continue;
+        }
+        // 转换子节点对象
+        let childNodeObj1 = utilsObj.convertNodeToObj(childNode1)
+        // 设置原始节点
+        childNodeObj1.sourceNode = childNode1
+
+        // 递归获取子节点
+        childNodeObj1 = utilsObj.recursionNode(childNodeObj1);
+        // 将子节点添加到数组中
+        children.push(childNodeObj1);
+    }
+    // 重新赋值子节点数组
+    childNodeObj.children = children;
+    // 返回根节点
+    return childNodeObj;
+}
+
+
+
+// 
+function findViewNodes(viewNode) {
+    let viewNodes = [];
+    let breadthViewNodes = [];
+    // 节点加入队列    
+    breadthViewNodes.push(viewNode);
+    // 遍历队列中的节点    
+    while (breadthViewNodes.length > 0) {
+        let headViewNode = breadthViewNodes.shift();
+        // 子节点入队列        
+        let childCount = headViewNode.childCount();
+        for (let i = 0; i < childCount; i++) {
+            let childViewNode = headViewNode.child(i);
+            breadthViewNodes.push(childViewNode);
+        }
+        // 父节点入库   
+        viewNodes.push(headViewNode);
+    }
+    return viewNodes;
+}
+
+/**
+ * 节点转换
+ * @param {*} UINode 
+ * @returns 
+ */
+utilsObj.convertNodeToObj = (UINode) => {
+    let obj = {}
+    obj.content = UINode.text() || UINode.desc() || "";
+    let desc = UINode.desc();
+    obj.isDesc = desc !== 'undefined' && desc !== '' && desc !== null
+    obj.id = UINode.id();
+    let bounds = UINode.bounds();
+    let boundsInfo = {
+        left:bounds.left,
+        top:bounds.top,
+        right:bounds.right,
+        bottom:bounds.bottom
+    }
+    
+    obj.depth = UINode.depth();
+    obj.index = 0;
+    obj.boundsInScreen = UINode.bounds();
+    
+    obj.sourceNodeId = UINode.sourceNodeId();
+    obj.packageName = UINode.packageName();
+    obj.className = UINode.className();
+    obj.text = UINode.text();
+    obj.desc = UINode.desc();
+    obj.indexInParent = UINode.indexInParent();
+    obj.boundsInParent = UINode.boundsInParent();
+    
+    obj.boundsInfo = boundsInfo;
+    obj.mDepth = UINode.depth();
+    obj.checkable = UINode.checkable();
+    obj.checked = UINode.checked();
+    obj.focusable = UINode.focusable();
+    obj.focused = UINode.focused();
+    obj.accessibilityFocused = UINode.accessibilityFocused()
+    obj.selected = UINode.selected();
+    obj.clickable = UINode.clickable();
+    obj.drawingOrder = UINode.drawingOrder();
+    obj.longClickable = UINode.longClickable();
+    obj.enabled = UINode.enabled();
+    obj.password = UINode.password();
+    obj.scrollable = UINode.scrollable();
+    obj.visible = UINode.visibleToUser();
+    obj.visibleToUser = UINode.visibleToUser();
+    obj.column = UINode.column();
+    obj.columnCount = UINode.columnCount();
+    obj.columnSpan = UINode.columnSpan();
+    obj.depth = UINode.depth();
+    obj.row = UINode.row();
+    obj.rowCount = UINode.rowCount();
+    obj.rowSpan = UINode.rowSpan();
+    obj.nodeKey = new Date().getTime() + "_" +  randomNum(10) + "_" + obj.className
+
+    let label = "";
+    if(obj.className){
+        label += obj.className
+    }
+    let arr = []
+    if(obj.id){
+        arr.push("id="+obj.id);
+    }
+    if(obj.scrollable){
+        arr.push("scrollable");
+    }
+    if(obj.text){
+        arr.push("text="+obj.text);
+    }
+    if(obj.desc){
+        arr.push("desc="+obj.desc);
+    }
+    if(obj.clickable){
+        arr.push("clickable");
+    }
+    if(obj.longClickable){
+        arr.push("longClickable");
+    }
+    if(obj.visible){
+        arr.push("visible");
+    }
+    if(arr && arr.length){
+        label += JSON.stringify(arr);
+    }
+    obj.label = label
+    return obj;
+}
+
+
+function randomNum(n){
+    var res = "";
+    for(var i=0;i<n;i++){
+      res += Math.floor(Math.random()*10);
+    }
+    return res;
+  }
+  
 
 module.exports = utilsObj

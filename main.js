@@ -10,36 +10,37 @@ ui.layout(
                 <frame>
                     <vertical padding="15 10" bg="#eeeeee">
                         <ScrollView h="auto" layout_weight="25">
-                        <vertical h="auto" layout_weight="25">
-                            <card contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px">
-                                <vertical id="deiveceBaseInfo" visibility="visible">
-                                    <text text="基本信息:" textSize="22sp" textColor="#210303" marginBottom="5px" />
-                                    <horizontal h="80px">
-                                        <text text="屏幕宽度:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
-                                        <text id="屏幕宽度" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
-                                    </horizontal>
-                                    <horizontal h="80px">
-                                        <text text="屏幕高度:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
-                                        <text id="屏幕高度" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
-                                    </horizontal>
-                                    <horizontal h="80px">
-                                        <text text="DPI:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
-                                        <text id="DPI" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
-                                    </horizontal>
-                                    <horizontal h="80px">
-                                        <text text="设备UUID:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
-                                        <text id="设备UUID" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
-                                    </horizontal>
-                                    <horizontal h="80px">
-                                        <text text="当前版本号:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
-                                        <text id="当前版本号" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
-                                    </horizontal>
-                                </vertical>
-                            </card>
-                        </vertical>
-                        </ScrollView> 
+                            <vertical h="auto" layout_weight="25">
+                                <card contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px">
+                                    <vertical id="deiveceBaseInfo" visibility="visible">
+                                        <text text="基本信息:" textSize="22sp" textColor="#210303" marginBottom="5px" />
+                                        <horizontal h="80px">
+                                            <text text="屏幕宽度:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
+                                            <text id="屏幕宽度" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
+                                        </horizontal>
+                                        <horizontal h="80px">
+                                            <text text="屏幕高度:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
+                                            <text id="屏幕高度" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
+                                        </horizontal>
+                                        <horizontal h="80px">
+                                            <text text="DPI:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
+                                            <text id="DPI" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
+                                        </horizontal>
+                                        <horizontal h="80px">
+                                            <text text="设备UUID:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
+                                            <text id="设备UUID" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
+                                        </horizontal>
+                                        <horizontal h="80px">
+                                            <text text="当前版本号:" textColor="#210303" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
+                                            <text id="当前版本号" text="" textColor="#210303" textSize="16sp" h="*" w="*" gravity="left|center" layout_weight="2" />
+                                        </horizontal>
+                                    </vertical>
+                                </card>
+                            </vertical>
+                        </ScrollView>
                         <horizontal layout_weight="1" gravity="center" w="*" marginTop="30px">
-                            <button id="help" layout_gravity="center" w="*" text="使用介绍" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
+                            <button id="help" layout_gravity="center"  text="使用介绍" w="300px" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
+                            <button id="layoutAnalysis" layout_gravity="center" text="限制应用布局分析APP下载" w="500px" marginLeft="50px" style="Widget.AppCompat.Button.Colored" bg="#ff5723"></button>
                         </horizontal>
                     </vertical>
                 </frame>
@@ -80,10 +81,10 @@ ui.layout(
 );
 
 
- //设置滑动页面的标题
- ui.viewpager.setTitles(["设备信息", "权限设置", "功能设置", "运行日志"]);
- //让滑动页面和标签栏联动
- ui.tabs.setupWithViewPager(ui.viewpager);
+//设置滑动页面的标题
+ui.viewpager.setTitles(["设备信息", "权限设置", "功能设置", "运行日志"]);
+//让滑动页面和标签栏联动
+ui.tabs.setupWithViewPager(ui.viewpager);
 activity.setSupportActionBar(ui.toolbar)
 
 let permission = require("./permission.js")
@@ -118,11 +119,11 @@ function initUiSetting() {
             <vertical>
                 <text text="公共参数设置:" textSize="22sp" textColor="#210303" marginBottom="5px" />
                 <horizontal h="80px">
-                    <text text="服务端IP:" textSize="16sp"  h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <text text="服务端IP:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="服务端IP" inputType="text" hint="请输入服务端ip" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="80px">
-                    <text text="访问密码:" textSize="16sp"  h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <text text="访问密码:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="访问密码" inputType="text" hint="WEB端操作设备所需" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="80px">
@@ -142,11 +143,11 @@ function initUiSetting() {
                     <input id="debugSleep" hint="请填写延时毫秒数,建议1000" h="*" w="*" margin="0" textSize="16sp" padding="15px 0 0 0" bg="#ffffff" inputType="text" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="80px">
-                    <text text="标准宽度:" textSize="16sp"  h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <text text="标准宽度:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="standardWidth" inputType="number" hint="请输入标准宽度" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="80px">
-                    <text text="标准高度:" textSize="16sp"  h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <text text="标准高度:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="standardHeight" inputType="number" hint="请输入标准高度" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="80px">
@@ -154,13 +155,13 @@ function initUiSetting() {
                     <Switch id="standardConvert" checked="false" h="*" w="*" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <text text="非标准分辨率生效:" textSize="22sp" textColor="#210303" marginBottom="5px" />
-                <text text="在标准分辨率下,以坐标轴最大值的一半为基数,设置值为系数,可进行双向坐标偏移" textSize="16sp"  h="*" w="*" gravity="left|center"/>
+                <text text="在标准分辨率下,以坐标轴最大值的一半为基数,设置值为系数,可进行双向坐标偏移" textSize="16sp" h="*" w="*" gravity="left|center" />
                 <horizontal h="80px">
-                    <text text="x偏移系数:" textSize="16sp"  h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <text text="x偏移系数:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="x偏移系数" inputType="number" hint="请输入x偏移系数0-100" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="80px">
-                    <text text="y偏移系数:" textSize="16sp"  h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <text text="y偏移系数:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="y偏移系数" inputType="number" hint="请输入y偏移系数0-100" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
             </vertical>
@@ -172,17 +173,17 @@ function initUiSetting() {
     let 文字识别插件 = commonStorage.get("文字识别插件") || "谷歌"
     utils.initOcr(文字识别插件)
 
-    let standardWidth =commonStorage.get('standardWidth')
+    let standardWidth = commonStorage.get('standardWidth')
     let standardHeight = commonStorage.get('standardHeight')
-    if(!standardWidth){
-        commonStorage.put('standardWidth',device.width)
+    if (!standardWidth) {
+        commonStorage.put('standardWidth', device.width)
     }
-    if(!standardHeight){
-        commonStorage.put('standardHeight',device.height)
+    if (!standardHeight) {
+        commonStorage.put('standardHeight', device.height)
     }
 
-     // 调试模式监听
-     utils.switchChangeEvent("debugModel", (checked) => {
+    // 调试模式监听
+    utils.switchChangeEvent("debugModel", (checked) => {
         ui["调试延时"].attr("visibility", checked ? "visible" : "gone")
     })
 
@@ -191,7 +192,7 @@ function initUiSetting() {
 
 
     let 服务端IP = commonStorage.get('服务端IP')
-    if(服务端IP){
+    if (服务端IP) {
         let 自动运行 = commonStorage.get("自动运行") || false
         if (自动运行) {
             toastLog("自动运行")
@@ -231,8 +232,11 @@ initUiSetting()
 ui.startScript.on("click", () => {
     startScriptFun()
 })
-ui.help.on("click",()=>{
+ui.help.on("click", () => {
     app.openUrl("https://www.zjh336.cn/?id=2109")
+})
+ui.layoutAnalysis.on("click",()=>{
+    app.openUrl("http://121.4.241.250:5212/s/6o5IW")
 })
 // 保存设置按钮
 ui.saveSetting.on("click", () => {
@@ -254,8 +258,8 @@ ui.clearLog.on("click", () => {
 
 // 刷新ui
 events.broadcast.on("refreshUI", function () {
-     // 读取公共缓存数据
-     utils.getUICacheData(commonConstant.commonSettingKey, commonStorage)
+    // 读取公共缓存数据
+    utils.getUICacheData(commonConstant.commonSettingKey, commonStorage)
 });
 
 
@@ -308,14 +312,14 @@ var receiver = new JavaAdapter(android.content.BroadcastReceiver, {
     onReceive: function (context, intent) {
         switch (intent.action) {
             case Intent.ACTION_CONFIGURATION_CHANGED:
-                events.broadcast.emit("orientationchange",'');
+                events.broadcast.emit("orientationchange", '');
                 break;
         }
     },
-});                                                                                 
+});
 var filter = new IntentFilter();
 // 屏幕旋转
-filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);    
+filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
 context.registerReceiver(receiver, filter);
 events.on("exit", function () {
     receiver && context.unregisterReceiver(receiver);
