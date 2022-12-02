@@ -85,6 +85,7 @@ obj.init = function () {
         }
     }); */
     ui.backgroundOpenPermission.on("check", function (checked) {
+        toastLog("miui等第三方操作系统需要手动设置");
         if (checked) {
             toastLog("请打开后台弹出权限");
             app.openAppSetting(myPackageName);

@@ -32,13 +32,15 @@ events.broadcast.on("startPreviewDevice", (params) => {
         deviceParam.appSpace = operateObj.appSpace || 500
     }
     if(clickThread){
+        console.log("关闭自动点击线程")
         clickThread.interrupt()
     }
 
     if(deviceThread){
+        console.log("关闭预览线程")
         deviceThread.interrupt()
     }
-    console.log('开启线程')
+    console.log("开启自动点击线程")
     clickThread = threads.start(function () {
         while (true) {
             text("立即开始").click()
@@ -46,12 +48,15 @@ events.broadcast.on("startPreviewDevice", (params) => {
     });
     deviceThread = threads.start(() => {
         try {
+            console.log("重开权限")
             images.stopScreenCapture()
             images.requestScreenCapture()
         } catch (error) {
             console.error("重开截图权限错误",error)
         }
         files.createWithDirs("/sdcard/screenImg/")
+        sleep(500)
+        toastLog("开始预览")
         while (true) {
             try {
                 let img = images.captureScreen()
@@ -86,9 +91,9 @@ events.broadcast.on("startPreviewDevice", (params) => {
 // 停止预览设备
 events.broadcast.on("stopPreviewDevice", function () {
     if(deviceThread){
+        toastLog("停止预览")
         deviceThread.interrupt()
     }
-    console.log('退出线程')
 });
 // 点击立即开始
 threads.start(function () {

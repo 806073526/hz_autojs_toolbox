@@ -231,11 +231,9 @@ websocketHandler.objectMessageHandler = (text) => {
     utils.remoteHandler(messageData.message)
     // 预览设备
   } else if(messageData.action === "startPreviewDevice"){
-      console.log("收到消息startPreviewDevice")
       events.broadcast.emit("startPreviewDevice", messageData.message);
    // 停止预览设备   
   } else if(messageData.action === "stopPreviewDevice"){
-    console.log("收到消息stopPreviewDevice")
       events.broadcast.emit("stopPreviewDevice", messageData.message);
   }
 }
