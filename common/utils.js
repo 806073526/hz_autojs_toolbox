@@ -1990,7 +1990,38 @@ utilsObj.regionalClickFeatures = (img, x1, y1, x2, y2, threshold, maxVal, matchi
     }
 }
 
-
+/**
+ * 区域特征匹配或找图点击
+ * @param {Image} img 大图
+ * @param {int} x1 区域坐标x1
+ * @param {int} y1 区域坐标y1
+ * @param {int} x2 区域坐标x2
+ * @param {int} y2 区域坐标y2
+ * @param {int} threshold 阈值化相似度
+ * @param {int} maxVal 阈值化最大值
+ * @param {int} imgThreshold 图片相似度
+ * @param {String} matchingImgPath 匹配图片路径
+ * @param {float} bigScale  大图缩放比例 【0.1-1】
+ * @param {float} smallScale 小图缩放比例 【0.1-1】
+ * @param {float} featuresThreshold 特征相似度 【0.1-1】
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
+ * @param {*} successCall 成功回调
+ */
+utilsObj.regionalClickImgOrFeatures = (img, x1, y1, x2, y2, threshold, maxVal,imgThreshold, matchingImgPath, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, successCall) => {
+     // 读取临时图片
+    let targetImg = utilsObj.includesContains(['http:', 'https:'], matchingImgPath) ? images.load(matchingImgPath) : images.read(matchingImgPath);
+    // 进行一次匹配
+    let macthingXy = utilsObj.regionalFindImgOrFeatures(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold)
+    utilsObj.recycleNull(img);
+    utilsObj.recycleNull(targetImg);
+    if (macthingXy && macthingXy.x !== -1) {
+        utilsObj.randomClick(macthingXy.x, macthingXy.y, 1, false);
+        if (successCall) {
+            successCall()
+        }
+    }
+}
 
 /**
  * 区域获取匹配图片
