@@ -1890,6 +1890,7 @@ utilsObj.canvasRect = (x1, y1, x2, y2, type, msg) => {
         if (canvasFloat) {
             canvasFloat.close();
         }
+        sleep(200)
     }
 }
 
