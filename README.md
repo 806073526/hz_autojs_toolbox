@@ -12,18 +12,4 @@ QQ:806073526
 
 QQ群:818757945
 
-
-#### 安装教程
-
-见介绍
-
-#### 使用说明
-
-见介绍
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+[![郑建华/华仔AutoJs工具箱_Web端](https://gitee.com/zjh336/hz_autojs_toolbox_web/widgets/widget_card.svg?colors=4183c4,ffffff,ffffff,e3e9ed,666666,9b9b9b)](https://gitee.com/zjh336/hz_autojs_toolbox_web)
