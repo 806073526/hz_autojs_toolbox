@@ -3517,7 +3517,7 @@ utilsObj.getJoinMatchingPageKey = () => {
 /**
  * 远程限制应用布局分析
  */
-utilsObj.remoteLimitLayoutAnalysis = ()=>{
+utilsObj.remoteLimitLayoutAnalysis = (analysisRange)=>{
     // 启动应用
     let exits = launchApp("限制应用布局分析")
     // 本地没有应用
@@ -3548,14 +3548,18 @@ utilsObj.remoteLimitLayoutAnalysis = ()=>{
 /**
  * 获取根节点并写入本地文件
  */
-utilsObj.getRootNodeWriteLocal = (nodeType) => {
+utilsObj.getRootNodeWriteLocal = (nodeType,analysisRange) => {
     let localNodeFile = "/sdcard/autoJsTools/rootNode.json"
     files.ensureDir(localNodeFile)
+    console.log(analysisRange)
+    if(!analysisRange){
+        analysisRange = "active";
+    }
 
     toastLog("正在分析布局,请稍候")
     if (nodeType === "tree") {
         // 获取根节点
-        let rootNodeObj = utilsObj.getRootNodeByTree(true);
+        let rootNodeObj = utilsObj.getRootNodeByTree(true,analysisRange);
         //写入文件
         files.write(localNodeFile, JSON.stringify(rootNodeObj,'','\t'));
     } else {
@@ -3604,25 +3608,54 @@ utilsObj.uploadNodePreviewImg = ()=>{
  * @param {*} isRemoveSouceNode 是否删除原节点
  * @returns 
  */
-utilsObj.getRootNodeByTree = (isRemoveSouceNode) => {
-    // 获取根节点
-    let windowRoot = auto.rootInActiveWindow;
-    if (!windowRoot) {
-        toastLog("未获取到节点,当前应用可能被限制,请尝试使用《限制应用布局分析》APP本地分析")
-        return { "msg": "未获取到节点,当前应用可能被限制,请尝试使用《限制应用布局分析》APP本地分析" }
+utilsObj.getRootNodeByTree = (isRemoveSouceNode,analysisRange) => {
+    if(analysisRange === 'active'){
+        // 获取根节点
+        let windowRoot = auto.rootInActiveWindow;
+        if (!windowRoot) {
+            toastLog("未获取到节点,当前应用可能被限制,请尝试使用《限制应用布局分析》APP本地分析")
+            return { "msg": "未获取到节点,当前应用可能被限制,请尝试使用《限制应用布局分析》APP本地分析" }
+        }
+        // 转换根节点
+        let rootNodeObj = utilsObj.convertNodeToObj(windowRoot);
+        // 原始节点
+        rootNodeObj.sourceNode = windowRoot
+        // 递归获取子节点
+        rootNodeObj = utilsObj.recursionNode(rootNodeObj);
+        if (isRemoveSouceNode) {
+            rootNodeObj = utilsObj.recursionClearSouceNode(rootNodeObj);
+        }
+        toastLog("布局分析完成,请上传")
+        // 返回根节点
+        return rootNodeObj;
+    } else {
+        auto.setWindowFilter(function(window){
+            //不管是如何窗口，都返回true，表示在该窗口中搜索
+            return true;
+        });
+        // 获取全部窗口数组
+        let windosRootArr = auto.windowRoots;
+        let rootNodeObjArr = [];
+        for(let i=0;i<windosRootArr.length;i++){
+            let windowRoot = windosRootArr[i];
+            if (!windowRoot) {
+                continue;
+            }
+            // 转换根节点
+            let rootNodeObj = utilsObj.convertNodeToObj(windowRoot);
+            // 原始节点
+            rootNodeObj.sourceNode = windowRoot
+            // 递归获取子节点
+            rootNodeObj = utilsObj.recursionNode(rootNodeObj);
+            if (isRemoveSouceNode) {
+                rootNodeObj = utilsObj.recursionClearSouceNode(rootNodeObj);
+            }
+            rootNodeObjArr.push(rootNodeObj);
+        }
+        toastLog("布局分析完成,请上传")
+        // 返回根节点
+        return rootNodeObjArr;
     }
-    // 转换根节点
-    let rootNodeObj = utilsObj.convertNodeToObj(windowRoot);
-    // 原始节点
-    rootNodeObj.sourceNode = windowRoot
-    // 递归获取子节点
-    rootNodeObj = utilsObj.recursionNode(rootNodeObj);
-    if (isRemoveSouceNode) {
-        rootNodeObj = utilsObj.recursionClearSouceNode(rootNodeObj);
-    }
-    toastLog("布局分析完成,请上传")
-    // 返回根节点
-    return rootNodeObj;
 }
 
 /**
