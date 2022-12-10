@@ -1808,6 +1808,13 @@ utilsObj.regionalFindImg3 = (img, targetImg, paramArray, canvasMsg) => {
 
 /**
  * 绘制方框
+ * @param {int} x1 区域坐标x1
+ * @param {int} y1 区域坐标y1
+ * @param {int} x2 区域坐标x2
+ * @param {int} y2 区域坐标y2
+ * @param {*} type 消息类型 img chart color
+ * @param {*} msg 消息内容
+ * @returns 
  */
 utilsObj.canvasRect = (x1, y1, x2, y2, type, msg) => {
     // 非调试模式
@@ -3007,6 +3014,7 @@ utilsObj.regionalAnalysisChartPosition2 = (img, x1, y1, x2, y2, threshold, maxVa
 /**
  * ocr获取文字识别内容结果(canvas绘画专用)
  * @param {*} img 
+ * @param {Function} callback 回调函数
  */
 utilsObj.ocrGetResultToCanvas = (img, callback) => {
     // 读取
