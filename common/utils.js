@@ -3598,6 +3598,7 @@ utilsObj.uploadNodePreviewImg = ()=>{
     try {
         let img = images.captureScreen()
         let tempImgPath = '/sdcard/screenImg/nodePreviewImg.jpg'
+        files.createWithDirs("/sdcard/screenImg/")
         // 临时图片路径
         files.remove(tempImgPath)
         sleep(10)
