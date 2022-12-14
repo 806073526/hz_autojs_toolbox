@@ -1,79 +1,62 @@
 {
-	"abis": [
-	  "arm64-v8a",
-	  "armeabi-v7a"
-	],
+	"abis": ["arm64-v8a", "armeabi-v7a"],
 	"assets": [],
 	"build": {
-	  "build_id": "66EF587E-19",
-	  "build_number": 19,
-	  "build_time": 1670477838816,
-	  "release": false
+		"build_number": 20,
+		"build_time": 1670504470578,
+		"release": false
 	},
 	"encryptLevel": 3,
-	"features": {
-	  "activityIntentTasks": false,
-	  "nodejs": "disabled"
-	},
-	"icon": "images/ic_app_logo.png",
+	"useFeatures": [],
 	"launchConfig": {
-	  "displaySplash": true,
-	  "hideLogs": false,
-	  "splashText": "欢迎关注华仔部落！",
-	  "stableMode": false
+		"displaySplash": true,
+		"hideLogs": false,
+		"splashText": "欢迎关注华仔部落！",
+		"stableMode": false,
+		"splashIcon": null,
+		"splashLayoutXml": null
 	},
 	"main": "main.js",
 	"name": "华仔AutoJs工具箱",
 	"optimization": {
-	  "obfuscateComponents": true,
-	  "removeAccessibilityService": false,
-	  "removeOpenCv": false,
-	  "unusedResources": false
+		"removeOpenCv": false,
+		"unusedResources": false,
+		"removeAccessibilityService": false,
+		"obfuscateComponents": true
 	},
 	"packageName": "com.zjh336.cn.tools",
+	"scripts": {},
+	"versionCode": 1700,
+	"versionName": "1.7.0",
+	"icon": "images/ic_app_logo.png",
+	"publish": {
+		"category": "实用工具",
+		"details": "web端开源地址http://gitee.com/zjh336 在线web端地址http://121.4.241.250:9998",
+		"maxAutoJsVersion": 0,
+		"maxProVersion": 0,
+		"minAutoJsVersion": 0,
+		"minProVersion": 0,
+		"minSdkVersion": 0,
+		"permissions": [],
+		"summary": "图色脚本的好帮手",
+		"tags": []
+	},
+	"signingConfig": {
+		"keystore": "/storage/emulated/0/脚本/.keystore/autojsprotools.jks",
+		"alias": "zjh336",
+		"uuid": "1fc3bcba-43c2-4e32-9042-253c86ecd06c"
+	},
+	"androidResources": null,
 	"permissionConfig": {
-	  "manifestPermissions": [
-		"android.permission.READ_EXTERNAL_STORAGE",
-		"android.permission.WRITE_SETTINGS",
-		"android.permission.WRITE_EXTERNAL_STORAGE",
-		"android.permission.WAKE_LOCK",
-		"android.permission.VIBRATE",
-		"android.permission.SYSTEM_ALERT_WINDOW",
-		"android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
-		"android.permission.READ_PHONE_STATE",
-		"android.permission.INTERNET",
-		"android.permission.FOREGROUND_SERVICE",
-		"android.permission.ACCESS_WIFI_STATE",
-		"android.permission.ACCESS_VIBRATOR_STATE",
-		"android.permission.ACCESS_NETWORK_STATE"
-	  ],
-	  "requestListOnStartup": [
-		"android.permission.READ_PHONE_STATE",
-		"android.permission.WRITE_EXTERNAL_STORAGE"
-	  ]
+		"manifestPermissions": ["android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_SETTINGS", "android.permission.WRITE_EXTERNAL_STORAGE", "android.permission.WAKE_LOCK", "android.permission.VIBRATE", "android.permission.SYSTEM_ALERT_WINDOW", "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "android.permission.READ_PHONE_STATE", "android.permission.INTERNET", "android.permission.FOREGROUND_SERVICE", "android.permission.ACCESS_WIFI_STATE", "android.permission.ACCESS_VIBRATOR_STATE", "android.permission.ACCESS_NETWORK_STATE"],
+		"requestListOnStartup": ["android.permission.READ_PHONE_STATE", "android.permission.WRITE_EXTERNAL_STORAGE"]
+	},
+	"features": {
+		"builtInOCR": null,
+		"activityIntentTasks": false,
+		"nodejs": "disabled"
 	},
 	"plugins": {
-	  "org.autojs.autojspro.plugin.mlkit.ocr": "1.1"
-	},
-	"publish": {
-	  "category": "实用工具",
-	  "details": "点击使用介绍",
-	  "maxAutoJsVersion": 0,
-	  "maxProVersion": 0,
-	  "minAutoJsVersion": 0,
-	  "minProVersion": 0,
-	  "minSdkVersion": 0,
-	  "permissions": [],
-	  "summary": "图色脚本的好帮手",
-	  "tags": []
-	},
-	"scripts": {},
-	"signingConfig": {
-	  "alias": "zjh336",
-	  "keystore": "/storage/emulated/0/脚本/.keystore/autojsprotools.jks",
-	  "uuid": "1fc3bcba-43c2-4e32-9042-253c86ecd06c"
-	},
-	"useFeatures": [],
-	"versionCode": 1600,
-	"versionName": "1.6.0"
-  }
+		"org.autojs.autojspro.plugin.mlkit.ocr": "1.1"
+	}
+}

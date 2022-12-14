@@ -155,14 +155,14 @@ utilsObj.downLoadFile = (downloadFileUrl, loaclFileUrl, callback) => {
             while (true) {
                 var 当前写入的文件大小 = byteSum
                 var 百分比 = parseInt(当前写入的文件大小 / connLength * 100)
-                toastLog('已下载：' + 百分比 + "%")
+                toastLog(loaclFileUrl + '已下载：' + 百分比 + "%")
                 if (当前写入的文件大小 >= connLength) {
                     if (callback) {
                         callback()
                     }
                     break;
                 }
-                sleep(5000)
+                sleep(3000)
             }
         })
         while ((byteRead = inStream.read(buffer)) != -1) {
@@ -776,7 +776,7 @@ utilsObj.includesContains = (arr, val) => {
 utilsObj.request = (url, requestMethod, requestBody, callback) => {
     // GET-键值对 POST-JSON
     let contentType = requestMethod === "GET" ? "application/x-www-form-urlencoded" : 'application/json'
-    http.request(config.getHttpBaseUrl() + "/ajControl/" + url, {
+    http.request(config.getHttpBaseUrl() + url, {
         headers: {
             "deviceUUID": deviceUUID
         },
