@@ -936,7 +936,16 @@ utilsObj.remoteHandler = (message) => {
     // 解密后字符串
     let decodeAftrJson = $base64.decode(message)
     // json字符串转换js对象
-    let operateObj = JSON.parse(decodeAftrJson)
+    let operateObj = null;
+    try {
+        // 尝试直接解析json
+        operateObj = JSON.parse(decodeAftrJson)
+    } catch (error) {
+         // 如果失败 则尝试解码字符串后
+        decodeAftrJson = decodeURIComponent(decodeAftrJson);
+         // 再解析json
+        operateObj = JSON.parse(decodeAftrJson)
+    }
     // 调用方法名称
     let functionName = operateObj.functionName
     // 方法参数 例如：[1,2,3]
@@ -2782,7 +2791,7 @@ utilsObj.ocrGetContentStr = (img) => {
             let resultMlk = googleOcr.detect(img);
             let end = Date.now()
             // 读取文字识别内容
-            let contentMlkArr = Object.values(resultMlk).map(item => item.text) || []
+            let contentMlkArr = resultMlk.map(item => item.text) || []
             // 控制台是否打印识图结果
             if (commonStorage.get("debugModel")) {
                 // 读取文字识别内容
@@ -2886,7 +2895,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
     } else if (curOcrName === "谷歌" && googleOcr) {
         let resultMlk = googleOcr.detect(img);
         // 读取文字识别内容
-        let contentMlkArr = Object.values(resultMlk).map(item => item.text) || []
+        let contentMlkArr = resultMlk.map(item => item.text) || []
         position.content = contentMlkArr.join('');
         // 控制台是否打印识图结果
         if (commonStorage.get("debugModel")) {
