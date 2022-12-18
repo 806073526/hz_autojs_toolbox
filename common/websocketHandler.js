@@ -66,7 +66,9 @@ events.broadcast.on("orientationchange", function () {
 function sendDeviceToServer(){
   // 其他属性
   let otherProperty = {
-    orientation: utils.getOrientation()
+    orientation: utils.getOrientation(),
+    debugModel:commonStorage.get('debugModel'),
+    debugSleep:commonStorage.get('debugSleep')
   }
   let otherPropertyJson = $base64.encode(JSON.stringify(otherProperty),'utf-8')
   // 设备对象

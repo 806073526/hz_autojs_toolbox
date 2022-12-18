@@ -303,16 +303,41 @@ utilsObj.multipleConditionMatchingByServiceName = (serviceName, allScreenImg) =>
 }
 
 
+// 处理业务参数
+utilsObj.handlerPageStting = (pageSetting) => {
+    let curPageSetting = {}
+    // 收集key
+    let keys = Object.keys(pageSetting);
+    keys.forEach(key => {
+        // 读取配置 
+        let obj = pageSetting[key]
+        // 获取分辨率对应的值
+        let pageSetingObj = obj[device.width + "_" + device.height]
+        // 未适配当前设备 则读取标准的
+        pageSetingObj = pageSetingObj || obj[config.screenWidth + "_" + config.screenHeight]
+        // 重新写入配置
+        curPageSetting[key] = pageSetingObj
+    })
+    // 返回配置项
+    return curPageSetting;
+}
+
 
 /**
  * 根据参数多条件匹配
  * @param {Object} pageSetting 页面参数 取commonConstant的pageSetting_业务
  * @param {Image} allScreenImg 全屏图片
+ * @param {Array} joinMatchingPageKeysArray 参与匹配的页面参数key数组
  */
-utilsObj.multipleConditionMatchingByPageSetting = (pageSetting, allScreenImg) => {
+utilsObj.multipleConditionMatchingByPageSetting = (pageSetting, allScreenImg, joinMatchingPageKeysArray) => {
 
     // 获取参与匹配的页面key
-    let joinMatchingPageKeys = utilsObj.getJoinMatchingPageKey()
+    let joinMatchingPageKeys = joinMatchingPageKeysArray || utilsObj.getJoinMatchingPageKey()
+
+    if(joinMatchingPageKeysArray && joinMatchingPageKeysArray.length){
+        // 处理页面参数 分辨率适配
+        pageSetting = utilsObj.handlerPageStting(pageSetting);
+    }
 
     // 寻找第一个匹配上的页面
     let firstMatchingPageKey = joinMatchingPageKeys.find((settingKey) => {
