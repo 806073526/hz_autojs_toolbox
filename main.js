@@ -119,8 +119,8 @@ function initUiSetting() {
             <vertical>
                 <text text="公共参数设置:" textSize="22sp" textColor="#210303" marginBottom="5px" />
                 <horizontal h="80px">
-                    <text text="服务端IP:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
-                    <input id="服务端IP" inputType="text" hint="请输入服务端ip" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
+                    <text text="服务端地址:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <input id="服务端地址" inputType="text" hint="请输入服务端地址" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="80px">
                     <text text="访问密码:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
@@ -191,8 +191,8 @@ function initUiSetting() {
     utils.getUICacheData(commonConstant.commonSettingKey, commonStorage)
 
 
-    let 服务端IP = commonStorage.get('服务端IP')
-    if (服务端IP) {
+    let 服务端地址 = commonStorage.get('服务端地址')
+    if (服务端地址) {
         let 自动运行 = commonStorage.get("自动运行") || false
         if (自动运行) {
             toastLog("自动运行")
@@ -204,12 +204,12 @@ function initUiSetting() {
 
 // 开始脚本
 function startScriptFun(callback) {
-    let remoteIp = ui['服务端IP'].attr("text")
+    let remoteIp = ui['服务端地址'].attr("text")
     if (!remoteIp) {
-        toast("请先设置服务端ip")
+        toast("请先设置服务端地址")
         return
     }
-    commonStorage.put("服务端IP", remoteIp)
+    commonStorage.put("服务端地址", remoteIp)
     const btnContent = ui.startScript.attr("text")
     toast(btnContent)
     const afterBtnContent = "启动脚本" === btnContent ? "停止脚本" : "启动脚本"
