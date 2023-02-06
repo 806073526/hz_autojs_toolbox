@@ -1167,7 +1167,7 @@ utilsObj.convertXY = (x, y, location) => {
         if (result.y < yChange) {
             result.y = 0
         } else {
-            result.y = y - yChange
+            result.y = result.y - yChange
         }
     }
 
