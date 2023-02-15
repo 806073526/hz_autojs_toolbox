@@ -40,7 +40,7 @@ ui.layout(
                         </ScrollView>
                         <horizontal layout_weight="1" gravity="center" w="*" marginTop="30px">
                             <button id="help" layout_gravity="center"  text="使用介绍" w="300px" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
-                            <button id="layoutAnalysis" layout_gravity="center" text="限制应用布局分析APP下载" w="500px" marginLeft="50px" style="Widget.AppCompat.Button.Colored" bg="#ff5723"></button>
+                            <button id="gitee" layout_gravity="center"  text="开源地址" w="300px" marginLeft="50px" style="Widget.AppCompat.Button.Colored" bg="#ff5723" />
                         </horizontal>
                     </vertical>
                 </frame>
@@ -66,8 +66,9 @@ ui.layout(
                         </ScrollView>
                         <horizontal layout_weight="1" gravity="center" marginTop="30px">
                             <button id="loadSetting" layout_gravity="center" text="载入配置" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
-                            <button id="saveSetting" layout_gravity="center" text="保存配置" style="Widget.AppCompat.Button.Colored" bg="#ff5723" marginLeft="100px" marginRight="100px" />
-                            <button id="startScript" layout_gravity="center" text="启动脚本" style="Widget.AppCompat.Button.Colored" bg="#04a9f5" />
+                            <button id="saveSetting" layout_gravity="center" text="保存配置" style="Widget.AppCompat.Button.Colored" bg="#ff5723" marginLeft="1px" marginRight="1px" />
+                            <button id="startScript" layout_gravity="center" text="启动脚本" style="Widget.AppCompat.Button.Colored" bg="#04a9f5" marginLeft="1px" marginRight="1px"/>
+							<button id="runUi" layout_gravity="center" text="运行程序" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
                         </horizontal>
                     </vertical>
                 </frame>
@@ -232,11 +233,21 @@ initUiSetting()
 ui.startScript.on("click", () => {
     startScriptFun()
 })
+
+ui.runUi.on("click", () => {
+	let uiPath = commonStorage.get('uiPath') || "/sdcard/appSync/main.js"
+	if(files.exists(uiPath)){
+		 engines.execScriptFile(uiPath)
+	} else {
+		toastLog('本地文件'+uiPath+'不存在,请先创建!')
+	}
+})
+
 ui.help.on("click", () => {
     app.openUrl("https://www.zjh336.cn/?id=2109")
 })
-ui.layoutAnalysis.on("click",()=>{
-    app.openUrl("http://121.4.241.250:5212/s/6o5IW")
+ui.gitee.on("click",()=>{
+    app.openUrl("https://gitee.com/zjh336/")
 })
 // 保存设置按钮
 ui.saveSetting.on("click", () => {

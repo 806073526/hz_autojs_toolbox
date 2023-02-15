@@ -26,8 +26,8 @@
 	},
 	"packageName": "com.zjh336.cn.tools",
 	"scripts": {},
-	"versionCode": 1800,
-	"versionName": "1.8.0",
+	"versionCode": 1900,
+	"versionName": "1.9.0",
 	"icon": "images/ic_app_logo.png",
 	"publish": {
 		"category": "实用工具",
