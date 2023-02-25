@@ -595,7 +595,108 @@ utilsObj.getServiceOperateParam = (pageName, operateSymbol) => {
     serviceParamObj = serviceParamObj || serviceParamObj[config.screenWidth + "_" + config.screenHeight]
     return serviceParamObj;
 }
+/**
+ * 执行业务操作
+ * @param {*} pageName 页面名称
+ * @param {*} operateSymbol 操作标志
+ * @param {*} functionName 方法名称
+ * @param {*} successCall 回调函数
+ */
+utilsObj.executeServiceOperate = (pageName,operateSymbol,functionName,successCall)=>{
+	// 获取业务参数对象
+	let serviceOperateParam = utils.getServiceOperateParam(pageName, operateSymbol);
+	if(!serviceOperateParam){
+		// 未获取到直接返回
+		return;
+	}
+	// 截全屏
+    let img = captureScreen();
+	
+	// 解构参数
+    let { position, threshold, maxVal, pathName, imgThreshold, color, colorOther, colorThreshold, matchingCount, transparentMask, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg } = serviceOperateParam
+	
+	let x1 = position[0];
+	let y1 = position[1];
+	let x2 = position[2];
+	let y2 = position[3];
+	let matchingImgPath = pathName;
 
+	// 读取图片
+    let targetImg = null;
+	
+	// 结果
+	let result;
+	
+	// 根据方法名执行参数
+	switch (functionName) {
+		// 区域找图
+		case "regionalFindImg2":
+			targetImg = images.read(pathName);
+			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+			break;
+		// 	区域找图点击
+		case "regionalClickImg2":
+			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingImgPath, imgThreshold, isOpenGray, isOpenThreshold, successCall);
+			break;
+		// 区域文字识别	
+		case "regionalAnalysisChart2":
+			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg);
+			break;
+		// 	区域文字识别获取坐标
+		case "regionalAnalysisChartPosition2":
+			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold);
+			break;
+		// 	区域文字识别点击
+		case "regionalClickText2":
+			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall);
+			break;
+        // 	区域文字识别点击 支持多条件匹配
+		case "regionalClickText3":
+			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall);
+			break;    
+		// 	区域匹配图片
+		case "regionalMatchTemplate2":
+			targetImg = images.read(pathName);
+			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, isOpenGray, isOpenThreshold, canvasMsg);
+			break;
+		// 	区域特征匹配
+		case "regionalMatchingFeatures":
+			targetImg = images.read(pathName);
+			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+			break;
+		// 	区域匹配特征
+		case "regionalMatchFeaturesTemplate":
+			targetImg = images.read(pathName);
+			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, matchingCount, canvasMsg);
+			break;	
+		// 	区域多点找色
+		case "regionalFindMultipleColor2":
+			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+			break;	
+		// 	区域多点找色点击
+		case "regionalClickColor2":
+			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, successCall);
+			break;	
+		// 	区域找图或者特征匹配
+		case "regionalFindImgOrFeatures":
+			targetImg = images.read(pathName);
+			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+			break;	
+		// 	区域匹配图片或者特征
+		case "regionalMatchTemplateOrMatchFeatures":
+			targetImg = images.read(pathName);
+			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+			break;	
+		// 	区域找圆
+		case "regionalFindCircles2":
+			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold);
+			break;
+		default:
+	}
+   // 回收图片
+   utilsObj.recycleNull(img);
+   return result;
+}
 
 /**
  * 自定义消息气泡
@@ -2837,8 +2938,15 @@ utilsObj.ocrGetContentStr = (img) => {
 /**
  * ocr获取文字识别固定内容匹配坐标
  * @param {*} img 
+ * @param {*} matchingContent 
+ * @param {*} x1 
+ * @param {*} y1 
+ * @param {*} x2 
+ * @param {*} y2 
+ * @param {*} openSplit 开启分隔符分隔处理 &表示且 |表示或
+ * @returns 
  */
-utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
+utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2, openSplit) => {
     if (commonStorage.get('debugModel')) {
         console.log("【OCR目标值】", matchingContent)
     }
@@ -2847,6 +2955,8 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
         y: -1,
         content: ""
     }
+
+
     // 当前使用浩然ocr且已经初始化
     if (curOcrName === "浩然" && hrOcr) {
         // 文字识别
@@ -2862,7 +2972,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
             console.info("")
         }
         // 匹配目标orc对象
-        let targetOcr = ocrArr.find(item => item.text.indexOf(matchingContent) !== -1)
+        let targetOcr = openSplit ? utilsObj.splitConditionaMatching(ocrArr,'text',matchingContent) : ocrArr.find(item => item.text.indexOf(matchingContent)!==-1);
         // 未匹配返回空
         if (!targetOcr) {
             return position;
@@ -2887,7 +2997,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
             console.info("")
         }
         // 匹配目标orc对象
-        let targetOcr = ocrArr.find(item => item.words.indexOf(matchingContent) !== -1)
+        let targetOcr = openSplit ? utilsObj.splitConditionaMatching(ocrArr,'words',matchingContent) : ocrArr.find(item => item.words.indexOf(matchingContent)!==-1)
         // 未匹配上，再次进行全屏匹配
         if (!targetOcr) {
             // 第二次文字识别
@@ -2903,7 +3013,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
                 console.info("【TomatoOCR】：" + contentArr.join(''))
                 console.info("")
             }
-            targetOcr = ocrArr2.find(item => item.words.indexOf(matchingContent) !== -1)
+            targetOcr =openSplit ? utilsObj.splitConditionaMatching(ocrArr2,'words',matchingContent) :  ocrArr2.find(item =>item.words.indexOf(matchingContent)!==-1)
             // 未匹配返回空
             if (!targetOcr) {
                 return position;
@@ -2928,7 +3038,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
             console.info("【谷歌OCR】：" + position.content)
             console.info("")
         }
-        let targetOcr = resultMlk.find(item => item.text.indexOf(matchingContent) !== -1)
+        let targetOcr = openSplit ? utilsObj.splitConditionaMatching(resultMlk,'text',matchingContent) : resultMlk.find(item => item.text.indexOf(matchingContent)!==-1)
         // 未匹配返回空
         if (!targetOcr) {
             return position;
@@ -2939,6 +3049,66 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2) => {
         return position;
     }
     return position;
+}
+
+
+/**
+ * 分隔条件匹配方法
+ * @param {*} sourceArr 匹配原始数据数组
+ * @param {*} matchingKey  匹配原始数据key
+ * @param {*} targetContent 目标内容
+ */
+utilsObj.splitConditionaMatching = (sourceArr,matchingKey,targetContent)=>{
+    //  1&2|3|4&5|6&7
+    // [1,2],[3],[4,5],[6,7]
+
+    // 外层条件数组
+    let arr = [];
+    // 根据|分隔成数组
+    let arr1 = targetContent.split('|') || ['']
+    for(let i=0;i<arr1.length;i++){
+        // 再根据&分隔数组
+        let arr2 = arr1[i].split('&');
+        arr.push(arr2);
+    }
+    // 已匹配对象
+    let matchingObj = null;
+    // 遍历源数组
+    for(let i=0;i<sourceArr.length;i++){
+        // 获取当前对象
+        let obj = sourceArr[i];
+        // 获取需要匹配内容
+        let matchingContent = obj[matchingKey]
+
+        // 遍历外层条件
+        for(let j=0;j<arr.length;j++){
+            // 获取内层条件
+            let tempArr = arr[j];
+            // 符合条件数量
+            let accordCount = 0;
+            // 遍历内层条件
+            for(let m=0;m<tempArr.length;m++){
+                // 获取内层数据
+                let value = tempArr[m];
+                // 满足条件 记录数量
+                if(matchingContent.indexOf(value) !== -1){
+                    accordCount+=1;
+                }
+            }
+            // 如果全部满足条件
+            if(accordCount === tempArr.length){
+                // 设置匹配对象
+                matchingObj = obj;
+                // 停止循环
+                break;
+            }
+        }
+        // 如果当前已找到匹配对象 停止循环
+        if(matchingObj){
+            break;
+        }
+    }
+    return matchingObj;
 }
 
 
@@ -3004,9 +3174,10 @@ utilsObj.regionalAnalysisChartPosition = (img, x1, y1, x2, y2, threshold, maxVal
  * @param {String} matchingContent 匹配内容
  * @param {boolean} isOpenGray 是否开启灰度化
  * @param {boolean} isOpenThreshold 是否开启阈值化
+ * @param {boolean} openSplit 匹配内容是否支持&与|分隔
  * @returns {x:int,y:int} 匹配文字的坐标
  */
-utilsObj.regionalAnalysisChartPosition2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold) => {
+utilsObj.regionalAnalysisChartPosition2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, openSplit) => {
     // 坐标转换
     let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
     let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
@@ -3021,7 +3192,7 @@ utilsObj.regionalAnalysisChartPosition2 = (img, x1, y1, x2, y2, threshold, maxVa
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【目标文字】" + matchingContent);
 
     // 根据内容获取匹配文字坐标
-    let matchingPosition = utilsObj.ocrGetPositionByContent(imgAfter, matchingContent, xy1["x"], xy1["y"], xy2["x"], xy2["x"])
+    let matchingPosition = utilsObj.ocrGetPositionByContent(imgAfter, matchingContent, xy1["x"], xy1["y"], xy2["x"], xy2["x"],openSplit)
 
     // 绘制方框
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + matchingPosition.content);
@@ -3254,6 +3425,34 @@ utilsObj.regionalClickText2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingC
         }
     }
 }
+
+
+/**
+ * 灰度化、阈值化 区域点击文字 支持多条件匹配使用|和&分隔匹配内容
+ * @desc 在大图的区域坐标范围内,进行灰度化阈值化处理后 再进行文字识别 寻找与目标内容匹配的坐标位置 再点击坐标
+  * @param {Image} img 大图对象(一般为截全屏的图片对象)
+ * @param {int} x1 区域坐标x1 
+ * @param {int} y1 区域坐标y1
+ * @param {int} x2 区域坐标x2
+ * @param {int} y2 区域坐标y2
+ * @param {int} threshold 阈值化相似度
+ * @param {int} maxVal 阈值化最大值
+ * @param {String} matchingContent 匹配内容
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
+ * @param {Function} successCall 成功回调
+ */
+ utilsObj.regionalClickText3 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall) => {
+    // 灰度化、阈值化区域识别文字获取坐标
+    let macthingXy = utilsObj.regionalAnalysisChartPosition2(img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, true)
+    if (macthingXy) {
+        utilsObj.randomClick(macthingXy.x, macthingXy.y, 1, false);
+        if (successCall) {
+            successCall()
+        }
+    }
+}
+
 
 
 /**
