@@ -613,14 +613,14 @@ utilsObj.executeServiceOperate = (pageName,operateSymbol,functionName,successCal
     let img = captureScreen();
 	
 	// 解构参数
-    let { position, threshold, maxVal, pathName, imgThreshold, color, colorOther, colorThreshold, matchingCount, transparentMask, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg } = serviceOperateParam
+    let { position, context, threshold, maxVal, pathName, imgThreshold, color, colorOther, colorThreshold, matchingCount, transparentMask, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg } = serviceOperateParam
 	
 	let x1 = position[0];
 	let y1 = position[1];
 	let x2 = position[2];
 	let y2 = position[3];
 	let matchingImgPath = pathName;
-
+	let matchingContent = context;
 	// 读取图片
     let targetImg = null;
 	
@@ -695,6 +695,7 @@ utilsObj.executeServiceOperate = (pageName,operateSymbol,functionName,successCal
 	}
    // 回收图片
    utilsObj.recycleNull(img);
+   utilsObj.recycleNull(targetImg);
    return result;
 }
 
