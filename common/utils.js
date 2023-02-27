@@ -604,7 +604,7 @@ utilsObj.getServiceOperateParam = (pageName, operateSymbol) => {
  */
 utilsObj.executeServiceOperate = (pageName,operateSymbol,functionName,successCall)=>{
 	// 获取业务参数对象
-	let serviceOperateParam = utils.getServiceOperateParam(pageName, operateSymbol);
+	let serviceOperateParam = utilsObj.getServiceOperateParam(pageName, operateSymbol);
 	if(!serviceOperateParam){
 		// 未获取到直接返回
 		return;
