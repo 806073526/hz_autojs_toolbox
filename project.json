@@ -1,62 +1,80 @@
 {
-	"abis": ["arm64-v8a", "armeabi-v7a"],
-	"assets": [],
-	"build": {
-		"build_number": 20,
-		"build_time": 1670504470578,
-		"release": false
-	},
-	"encryptLevel": 3,
-	"useFeatures": [],
-	"launchConfig": {
-		"displaySplash": true,
-		"hideLogs": false,
-		"splashText": "欢迎关注华仔部落！",
-		"stableMode": false,
-		"splashIcon": null,
-		"splashLayoutXml": null
-	},
-	"main": "main.js",
-	"name": "华仔AutoJs工具箱",
-	"optimization": {
-		"removeOpenCv": false,
-		"unusedResources": false,
-		"removeAccessibilityService": false,
-		"obfuscateComponents": true
-	},
-	"packageName": "com.zjh336.cn.tools",
-	"scripts": {},
-	"versionCode": 1900,
-	"versionName": "1.9.0",
-	"icon": "images/ic_app_logo.png",
-	"publish": {
-		"category": "实用工具",
-		"details": "游戏控件脚本辅助工具,提供图色封装,快速开发。",
-		"maxAutoJsVersion": 0,
-		"maxProVersion": 0,
-		"minAutoJsVersion": 0,
-		"minProVersion": 0,
-		"minSdkVersion": 0,
-		"permissions": [],
-		"summary": "图色脚本的好帮手",
-		"tags": []
-	},
-	"signingConfig": {
-		"keystore": "/storage/emulated/0/脚本/.keystore/autojsprotools.jks",
-		"alias": "zjh336",
-		"uuid": "1fc3bcba-43c2-4e32-9042-253c86ecd06c"
-	},
-	"androidResources": null,
-	"permissionConfig": {
-		"manifestPermissions": ["android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_SETTINGS", "android.permission.WRITE_EXTERNAL_STORAGE", "android.permission.WAKE_LOCK", "android.permission.VIBRATE", "android.permission.SYSTEM_ALERT_WINDOW", "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "android.permission.READ_PHONE_STATE", "android.permission.INTERNET", "android.permission.FOREGROUND_SERVICE", "android.permission.ACCESS_WIFI_STATE", "android.permission.ACCESS_VIBRATOR_STATE", "android.permission.ACCESS_NETWORK_STATE"],
-		"requestListOnStartup": ["android.permission.READ_PHONE_STATE", "android.permission.WRITE_EXTERNAL_STORAGE"]
-	},
-	"features": {
-		"builtInOCR": null,
-		"activityIntentTasks": false,
-		"nodejs": "disabled"
-	},
-	"plugins": {
-		"org.autojs.autojspro.plugin.mlkit.ocr": "1.1"
-	}
+  "abis": [
+    "arm64-v8a",
+    "armeabi-v7a"
+  ],
+  "assets": [],
+  "build": {
+    "build_id": "03003238-23",
+    "build_number": 23,
+    "build_time": 1678086421735,
+    "release": true
+  },
+  "encryptLevel": 0,
+  "features": {
+    "activityIntentTasks": false,
+    "builtInOCR": "with-models",
+    "nodejs": "disabled"
+  },
+  "icon": "images/ic_app_logo.png",
+  "launchConfig": {
+    "displaySplash": true,
+    "hideLogs": false,
+    "splashText": "欢迎关注华仔部落！",
+    "stableMode": false
+  },
+  "main": "main.js",
+  "name": "华仔AutoJs工具箱",
+  "optimization": {
+    "obfuscateComponents": true,
+    "removeAccessibilityService": false,
+    "removeOpenCv": false,
+    "unusedResources": false
+  },
+  "packageName": "com.zjh336.cn.tools",
+  "permissionConfig": {
+    "manifestPermissions": [
+      "android.permission.READ_EXTERNAL_STORAGE",
+      "android.permission.WRITE_SETTINGS",
+      "android.permission.WRITE_EXTERNAL_STORAGE",
+      "android.permission.WAKE_LOCK",
+      "android.permission.VIBRATE",
+      "android.permission.SYSTEM_ALERT_WINDOW",
+      "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+      "android.permission.READ_PHONE_STATE",
+      "android.permission.INTERNET",
+      "android.permission.FOREGROUND_SERVICE",
+      "android.permission.ACCESS_WIFI_STATE",
+      "android.permission.ACCESS_VIBRATOR_STATE",
+      "android.permission.ACCESS_NETWORK_STATE"
+    ],
+    "requestListOnStartup": [
+      "android.permission.READ_PHONE_STATE",
+      "android.permission.WRITE_EXTERNAL_STORAGE"
+    ]
+  },
+  "plugins": {
+    "org.autojs.autojspro.plugin.mlkit.ocr": "1.1"
+  },
+  "publish": {
+    "category": "实用工具",
+    "details": "游戏控件脚本辅助工具,提供图色封装,快速开发。",
+    "maxAutoJsVersion": 0,
+    "maxProVersion": 0,
+    "minAutoJsVersion": 0,
+    "minProVersion": 0,
+    "minSdkVersion": 0,
+    "permissions": [],
+    "summary": "图色脚本的好帮手",
+    "tags": []
+  },
+  "scripts": {},
+  "signingConfig": {
+    "alias": "",
+    "keystore": "",
+    "uuid": ""
+  },
+  "useFeatures": [],
+  "versionCode": 2000,
+  "versionName": "2.0.0"
 }

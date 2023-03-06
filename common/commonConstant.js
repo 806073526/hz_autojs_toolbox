@@ -3,6 +3,7 @@ let commonSettingKey = [
     { key: 'debugModel', type: "开关" },
     { key: 'debugSleep', type: "输入框" },
     { key: 'webSocketLog', type: "开关" },
+	{ key: 'showRemtoeExecScriptContent', type: "开关" },
     { key: '自动运行', type: "开关" },
     /* { key: '文字识别插件', type: "单选框" }, */
     { key: 'standardWidth', type: "输入框" },

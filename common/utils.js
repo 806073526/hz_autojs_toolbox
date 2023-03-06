@@ -1018,14 +1018,20 @@ utilsObj.remoteExecScript = (scriptText) => {
         // 解码
         scriptText = decodeURIComponent(scriptText)
         if (commonStorage.get("debugModel")) {
+		let showRemtoeExecScriptContent = commonStorage.get("showRemtoeExecScriptContent") || false
+        if (commonStorage.get("debugModel") && showRemtoeExecScriptContent) {
             console.log("远程脚本内容：" + scriptText)
         }
         eval(scriptText)
         console.log("远程执行脚本完成")
+		if (commonStorage.get("debugModel") && showRemtoeExecScriptContent) {
+            console.log("远程执行脚本完成")
+        }
     } catch (error) {
         console.error("远程执行脚本错误：", error)
     }
 }
+
 
 
 /**
@@ -1077,7 +1083,8 @@ utilsObj.remoteHandler = (message) => {
     let functionName = operateObj.functionName
     // 方法参数 例如：[1,2,3]
     let functionParam = operateObj.functionParam
-    if (commonStorage.get("debugModel")) {
+	let showRemtoeExecScriptContent = commonStorage.get("showRemtoeExecScriptContent") || false
+    if (commonStorage.get("debugModel") && showRemtoeExecScriptContent) {
         // 日志
         console.log("远程执行方法", functionName, functionParam)
     }

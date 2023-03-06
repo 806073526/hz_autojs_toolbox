@@ -143,6 +143,10 @@ function initUiSetting() {
                     <text text="调试延时:" textSize="16sp" h="*" w="400px" gravity="left|center" layout_weight="1" />
                     <input id="debugSleep" hint="请填写延时毫秒数,建议1000" h="*" w="*" margin="0" textSize="16sp" padding="15px 0 0 0" bg="#ffffff" inputType="text" gravity="left|center" layout_weight="2" />
                 </horizontal>
+				<horizontal h="80px" id="远程脚本日志" visibility="gone">
+                    <text text="远程脚本日志:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <Switch id="showRemtoeExecScriptContent" checked="false" h="*" w="*" gravity="left|center" layout_weight="2" />
+                </horizontal>
                 <horizontal h="80px">
                     <text text="标准宽度:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="standardWidth" inputType="number" hint="请输入标准宽度" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
@@ -185,7 +189,8 @@ function initUiSetting() {
 
     // 调试模式监听
     utils.switchChangeEvent("debugModel", (checked) => {
-        ui["调试延时"].attr("visibility", checked ? "visible" : "gone")
+        ui["调试延时"].attr("visibility", checked ? "visible" : "gone");
+		ui["远程脚本日志"].attr("visibility", checked ? "visible" : "gone");
     })
 
     // 读取公共缓存数据
