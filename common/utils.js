@@ -16,7 +16,6 @@ importClass(android.os.HardwarePropertiesManager);
 importClass(android.app.ActivityManager);
 importClass(java.io.BufferedReader);
 importClass(java.io.InputStreamReader);
-importClass(java.io.FileInputStream);
 importClass(java.io.File);
 importClass(java.io.RandomAccessFile);
 importClass(android.os.Process);
@@ -1017,13 +1016,11 @@ utilsObj.remoteExecScript = (scriptText) => {
     try {
         // 解码
         scriptText = decodeURIComponent(scriptText)
-        if (commonStorage.get("debugModel")) {
-		let showRemtoeExecScriptContent = commonStorage.get("showRemtoeExecScriptContent") || false
+      	let showRemtoeExecScriptContent = commonStorage.get("showRemtoeExecScriptContent") || false
         if (commonStorage.get("debugModel") && showRemtoeExecScriptContent) {
             console.log("远程脚本内容：" + scriptText)
         }
         eval(scriptText)
-        console.log("远程执行脚本完成")
 		if (commonStorage.get("debugModel") && showRemtoeExecScriptContent) {
             console.log("远程执行脚本完成")
         }
