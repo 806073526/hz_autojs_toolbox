@@ -605,16 +605,21 @@ utilsObj.getServiceOperateParam = (pageName, operateSymbol) => {
  * @param {*} operateSymbol 操作标志
  * @param {*} functionName 方法名称
  * @param {*} successCall 回调函数
+ * @param {*} extendParam 拓展参数
  */
-utilsObj.executeServiceOperate = (pageName,operateSymbol,functionName,successCall)=>{
+utilsObj.executeServiceOperate = (pageName,operateSymbol,functionName,successCall, extendParam)=>{
 	// 获取业务参数对象
-	let serviceOperateParam = utilsObj.getServiceOperateParam(pageName, operateSymbol);
+	let serviceOperateParam = utils.getServiceOperateParam(pageName, operateSymbol);
 	if(!serviceOperateParam){
 		// 未获取到直接返回
 		return;
 	}
 	// 截全屏
     let img = captureScreen();
+
+    if(extendParam){
+        Object.assign(serviceOperateParam,extendParam);
+    }
 	
 	// 解构参数
     let { position, context, threshold, maxVal, pathName, imgThreshold, color, colorOther, colorThreshold, matchingCount, transparentMask, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg } = serviceOperateParam
@@ -624,7 +629,7 @@ utilsObj.executeServiceOperate = (pageName,operateSymbol,functionName,successCal
 	let x2 = position[2];
 	let y2 = position[3];
 	let matchingImgPath = pathName;
-	let matchingContent = context;
+    let matchingContent = context;
 	// 读取图片
     let targetImg = null;
 	
@@ -697,9 +702,9 @@ utilsObj.executeServiceOperate = (pageName,operateSymbol,functionName,successCal
 			break;
 		default:
 	}
+   utilsObj.recycleNull(targetImg);
    // 回收图片
    utilsObj.recycleNull(img);
-   utilsObj.recycleNull(targetImg);
    return result;
 }
 
