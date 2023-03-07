@@ -230,6 +230,7 @@ function startScriptFun(callback) {
                 item.forceStop()
             }
         });
+		utils.timerStopPushLog();
     }
 }
 

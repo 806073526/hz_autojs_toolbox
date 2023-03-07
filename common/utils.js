@@ -81,6 +81,11 @@ utilsObj.getScreenHeight = () => {
     return screenHeight;
 }
 
+utilsObj.timerStopPushLog=()=> {
+	let timerStorage = storages.create("zjh336.cn_timer");
+    timerStorage.put('stop', 'stop');
+}
+
 
 let curOcrName = commonStorage.get("文字识别插件") || "谷歌"
 
