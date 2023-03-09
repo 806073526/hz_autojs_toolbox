@@ -59,6 +59,18 @@ try {
 } catch (error) {
 }
 
+// 随机字符串
+let getRandomString=(num)=>{
+	let chars = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
+	let nums="";
+	for(let i=0;i<num;i++){//这里是几位就要在这里不改变
+	let id = parseInt(Math.random()*61);
+	nums+=chars[id];
+	}
+	return nums;
+}
+
+
 // 数据map
 let dataMap = {}
 let commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
@@ -67,6 +79,9 @@ let deviceUUID = commonStorage.get('deviceUUID')
 if (!deviceUUID) {
     // 安卓10及以上 取androidId   10以下 取IMEI
     deviceUUID = config.SDK_API_VERSION > 28 ? device.getAndroidId() : device.getIMEI()
+	if(!deviceUUID){
+		deviceUUID = getRandomString(16);
+	}
     commonStorage.put("deviceUUID", deviceUUID)
 }
 
