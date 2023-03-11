@@ -2353,7 +2353,8 @@ utilsObj.regionalMatchTemplate = (img, targetImg, x1, y1, x2, y2, threshold, max
 utilsObj.regionalFindImgOrFeatures = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
     // 标准分辨率下进行找图  否则进行特征匹配
     let isStandard = utilsObj.getIsStandard()
-    if (isStandard) {
+	// 标准分辨率下 或者 设置了无需转换标记
+    if (isStandard || commonStorage.get("notNeedConvert")) {
         // 区域找图
         return utilsObj.regionalFindImg2(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold, canvasMsg)
     } else {
@@ -2478,7 +2479,8 @@ utilsObj.regionalMatchTemplate2 = (img, targetImg, x1, y1, x2, y2, threshold, ma
 utilsObj.regionalMatchTemplateOrMatchFeatures = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
     // 标准分辨率
     let isStandard = utilsObj.getIsStandard();
-    if (isStandard) {
+	// 标准分辨率下 或者 设置了无需转换标记
+    if (isStandard || commonStorage.get("notNeedConvert")) {
         // 区域特征匹配
         return utilsObj.regionalMatchTemplate2(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, isOpenGray, isOpenThreshold, canvasMsg);
     } else {
