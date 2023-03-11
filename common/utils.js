@@ -60,14 +60,14 @@ try {
 }
 
 // 随机字符串
-let getRandomString=(num)=>{
-	let chars = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
-	let nums="";
-	for(let i=0;i<num;i++){//这里是几位就要在这里不改变
-	let id = parseInt(Math.random()*61);
-	nums+=chars[id];
-	}
-	return nums;
+let getRandomString = (num) => {
+    let chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+    let nums = "";
+    for (let i = 0; i < num; i++) {//这里是几位就要在这里不改变
+        let id = parseInt(Math.random() * 61);
+        nums += chars[id];
+    }
+    return nums;
 }
 
 
@@ -79,9 +79,9 @@ let deviceUUID = commonStorage.get('deviceUUID')
 if (!deviceUUID) {
     // 安卓10及以上 取androidId   10以下 取IMEI
     deviceUUID = config.SDK_API_VERSION > 28 ? device.getAndroidId() : device.getIMEI()
-	if(!deviceUUID){
-		deviceUUID = getRandomString(16);
-	}
+    if (!deviceUUID) {
+        deviceUUID = getRandomString(16);
+    }
     commonStorage.put("deviceUUID", deviceUUID)
 }
 
@@ -96,8 +96,8 @@ utilsObj.getScreenHeight = () => {
     return screenHeight;
 }
 
-utilsObj.timerStopPushLog=()=> {
-	let timerStorage = storages.create("zjh336.cn_timer");
+utilsObj.timerStopPushLog = () => {
+    let timerStorage = storages.create("zjh336.cn_timer");
     timerStorage.put('stop', 'stop');
 }
 
@@ -332,8 +332,15 @@ utilsObj.handlerPageStting = (pageSetting) => {
         let obj = pageSetting[key]
         // 获取分辨率对应的值
         let pageSetingObj = obj[device.width + "_" + device.height]
+
+        let notNeedConvert = false;
+        // 如果当前不是标准的分辨率 且获取到了特定的分辨率的配置
+        if (!utilsObj.getIsStandard() && pageSetingObj) {
+            notNeedConvert = true;
+        }
         // 未适配当前设备 则读取标准的
-        pageSetingObj = pageSetingObj || obj[config.screenWidth + "_" + config.screenHeight]
+        pageSetingObj = pageSetingObj || obj[commonStorage.get('standardWidth') + "_" + commonStorage.get('standardHeight')]
+        pageSetingObj.notNeedConvert = notNeedConvert;
         // 重新写入配置
         curPageSetting[key] = pageSetingObj
     })
@@ -353,7 +360,7 @@ utilsObj.multipleConditionMatchingByPageSetting = (pageSetting, allScreenImg, jo
     // 获取参与匹配的页面key
     let joinMatchingPageKeys = joinMatchingPageKeysArray || utilsObj.getJoinMatchingPageKey()
 
-    if(joinMatchingPageKeysArray && joinMatchingPageKeysArray.length){
+    if (joinMatchingPageKeysArray && joinMatchingPageKeysArray.length) {
         // 处理页面参数 分辨率适配
         pageSetting = utilsObj.handlerPageStting(pageSetting);
     }
@@ -369,6 +376,9 @@ utilsObj.multipleConditionMatchingByPageSetting = (pageSetting, allScreenImg, jo
         let relationObj = pageSetingObj["relation"] || JSON.parse(JSON.stringify(commonConstant.relationDeafult));
         // 总映射关系
         let totalRelation = relationObj["total"]
+
+        // 设置临时参数
+        commonStorage.put("notNeedConvert", pageSetingObj["notNeedConvert"] ? true : false)
 
         let curSettingKey = "【" + settingKey + "】"
         // 总匹配数量
@@ -406,12 +416,16 @@ utilsObj.multipleConditionMatchingByPageSetting = (pageSetting, allScreenImg, jo
             }
         } catch (error) {
             console.error("多条件匹配错误", error)
+            // 清除临时参数
+            commonStorage.remove("notNeedConvert")
         }
+        // 清除临时参数
+        commonStorage.remove("notNeedConvert")
         // 总映射关系为且时 总匹配数量为3 为true 否则为 false
         return "and" === totalRelation && mathchingCount === 3
     })
     // 回收图片
-    utils.recycleNull(allScreenImg);
+    utilsObj.recycleNull(allScreenImg);
     console.info("当前页:【" + (firstMatchingPageKey || "无匹配") + "】")
     return firstMatchingPageKey || ""
 }
@@ -460,7 +474,7 @@ utilsObj.matchingRegionalFindImg = (totalRelation, relation, multipleImgArr, img
         // 区域找图或者找特征
         let p = utilsObj.regionalFindImgOrFeatures(img, targetImg, position[0], position[1], position[2], position[3], threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
         // 回收图片
-        utils.recycleNull(targetImg);
+        utilsObj.recycleNull(targetImg);
         // 找到了图片(特征)
         if (p && p.x != -1) {
             // 累计匹配数量
@@ -610,8 +624,15 @@ utilsObj.getServiceOperateParam = (pageName, operateSymbol) => {
     }
     // 获取分辨率对应的值
     let serviceParamObj = serviceParam[device.width + "_" + device.height]
+
+    let notNeedConvert = false;
+    // 如果当前不是标准的分辨率 且获取到了特定的分辨率的配置
+    if (!utilsObj.getIsStandard() && serviceParamObj) {
+        notNeedConvert = true;
+    }
     // 未适配当前设备 则读取标准的
-    serviceParamObj = serviceParamObj || serviceParamObj[config.screenWidth + "_" + config.screenHeight]
+    serviceParamObj = serviceParamObj || serviceParam[commonStorage.get('standardWidth') + "_" + commonStorage.get('standardHeight')]
+    serviceParamObj.notNeedConvert = notNeedConvert;
     return serviceParamObj;
 }
 /**
@@ -622,105 +643,109 @@ utilsObj.getServiceOperateParam = (pageName, operateSymbol) => {
  * @param {*} successCall 回调函数
  * @param {*} extendParam 拓展参数
  */
-utilsObj.executeServiceOperate = (pageName,operateSymbol,functionName,successCall, extendParam)=>{
-	// 获取业务参数对象
-	let serviceOperateParam = utils.getServiceOperateParam(pageName, operateSymbol);
-	if(!serviceOperateParam){
-		// 未获取到直接返回
-		return;
-	}
-	// 截全屏
+utilsObj.executeServiceOperate = (pageName, operateSymbol, functionName, successCall, extendParam) => {
+    // 获取业务参数对象
+    let serviceOperateParam = utilsObj.getServiceOperateParam(pageName, operateSymbol);
+    if (!serviceOperateParam) {
+        // 未获取到直接返回
+        return;
+    }
+    // 截全屏
     let img = captureScreen();
 
-    if(extendParam){
-        Object.assign(serviceOperateParam,extendParam);
+    if (extendParam) {
+        Object.assign(serviceOperateParam, extendParam);
     }
-	
-	// 解构参数
+    // 设置临时参数
+    commonStorage.put("notNeedConvert", serviceOperateParam.notNeedConvert ? true : false)
+
+    // 解构参数
     let { position, context, threshold, maxVal, pathName, imgThreshold, color, colorOther, colorThreshold, matchingCount, transparentMask, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg } = serviceOperateParam
-	
-	let x1 = position[0];
-	let y1 = position[1];
-	let x2 = position[2];
-	let y2 = position[3];
-	let matchingImgPath = pathName;
+
+    let x1 = position[0];
+    let y1 = position[1];
+    let x2 = position[2];
+    let y2 = position[3];
+    let matchingImgPath = pathName;
     let matchingContent = context;
-	// 读取图片
+    // 读取图片
     let targetImg = null;
-	
-	// 结果
-	let result;
-	
-	// 根据方法名执行参数
-	switch (functionName) {
-		// 区域找图
-		case "regionalFindImg2":
-			targetImg = images.read(pathName);
-			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold, canvasMsg);
-			break;
-		// 	区域找图点击
-		case "regionalClickImg2":
-			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingImgPath, imgThreshold, isOpenGray, isOpenThreshold, successCall);
-			break;
-		// 区域文字识别	
-		case "regionalAnalysisChart2":
-			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg);
-			break;
-		// 	区域文字识别获取坐标
-		case "regionalAnalysisChartPosition2":
-			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold);
-			break;
-		// 	区域文字识别点击
-		case "regionalClickText2":
-			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall);
-			break;
+
+    // 结果
+    let result;
+
+    // 根据方法名执行参数
+    switch (functionName) {
+        // 区域找图
+        case "regionalFindImg2":
+            targetImg = images.read(pathName);
+            result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+            break;
+        // 	区域找图点击
+        case "regionalClickImg2":
+            result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingImgPath, imgThreshold, isOpenGray, isOpenThreshold, successCall);
+            break;
+        // 区域文字识别	
+        case "regionalAnalysisChart2":
+            result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg);
+            break;
+        // 	区域文字识别获取坐标
+        case "regionalAnalysisChartPosition2":
+            result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold);
+            break;
+        // 	区域文字识别点击
+        case "regionalClickText2":
+            result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall);
+            break;
         // 	区域文字识别点击 支持多条件匹配
-		case "regionalClickText3":
-			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall);
-			break;    
-		// 	区域匹配图片
-		case "regionalMatchTemplate2":
-			targetImg = images.read(pathName);
-			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, isOpenGray, isOpenThreshold, canvasMsg);
-			break;
-		// 	区域特征匹配
-		case "regionalMatchingFeatures":
-			targetImg = images.read(pathName);
-			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
-			break;
-		// 	区域匹配特征
-		case "regionalMatchFeaturesTemplate":
-			targetImg = images.read(pathName);
-			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, matchingCount, canvasMsg);
-			break;	
-		// 	区域多点找色
-		case "regionalFindMultipleColor2":
-			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, canvasMsg);
-			break;	
-		// 	区域多点找色点击
-		case "regionalClickColor2":
-			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, successCall);
-			break;	
-		// 	区域找图或者特征匹配
-		case "regionalFindImgOrFeatures":
-			targetImg = images.read(pathName);
-			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
-			break;	
-		// 	区域匹配图片或者特征
-		case "regionalMatchTemplateOrMatchFeatures":
-			targetImg = images.read(pathName);
-			result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
-			break;	
-		// 	区域找圆
-		case "regionalFindCircles2":
-			result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold);
-			break;
-		default:
-	}
-   utilsObj.recycleNull(targetImg);
-   // 回收图片
-   utilsObj.recycleNull(img);
-   return result;
+        case "regionalClickText3":
+            result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall);
+            break;
+        // 	区域匹配图片
+        case "regionalMatchTemplate2":
+            targetImg = images.read(pathName);
+            result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, isOpenGray, isOpenThreshold, canvasMsg);
+            break;
+        // 	区域特征匹配
+        case "regionalMatchingFeatures":
+            targetImg = images.read(pathName);
+            result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+            break;
+        // 	区域匹配特征
+        case "regionalMatchFeaturesTemplate":
+            targetImg = images.read(pathName);
+            result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, matchingCount, canvasMsg);
+            break;
+        // 	区域多点找色
+        case "regionalFindMultipleColor2":
+            result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+            break;
+        // 	区域多点找色点击
+        case "regionalClickColor2":
+            result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, color, colorOther, colorThreshold, isOpenGray, isOpenThreshold, successCall);
+            break;
+        // 	区域找图或者特征匹配
+        case "regionalFindImgOrFeatures":
+            targetImg = images.read(pathName);
+            result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+            break;
+        // 	区域匹配图片或者特征
+        case "regionalMatchTemplateOrMatchFeatures":
+            targetImg = images.read(pathName);
+            result = utilsObj[functionName](img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg);
+            break;
+        // 	区域找圆
+        case "regionalFindCircles2":
+            result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold);
+            break;
+        default:
+    }
+    utilsObj.recycleNull(targetImg);
+    // 回收图片
+    utilsObj.recycleNull(img);
+    // 清除临时参数
+    commonStorage.remove("notNeedConvert")
+    return result;
 }
 
 /**
@@ -1041,12 +1066,12 @@ utilsObj.remoteExecScript = (scriptText) => {
     try {
         // 解码
         scriptText = decodeURIComponent(scriptText)
-      	let showRemtoeExecScriptContent = commonStorage.get("showRemtoeExecScriptContent") || false
+        let showRemtoeExecScriptContent = commonStorage.get("showRemtoeExecScriptContent") || false
         if (commonStorage.get("debugModel") && showRemtoeExecScriptContent) {
             console.log("远程脚本内容：" + scriptText)
         }
         eval(scriptText)
-		if (commonStorage.get("debugModel") && showRemtoeExecScriptContent) {
+        if (commonStorage.get("debugModel") && showRemtoeExecScriptContent) {
             console.log("远程执行脚本完成")
         }
     } catch (error) {
@@ -1096,16 +1121,16 @@ utilsObj.remoteHandler = (message) => {
         // 尝试直接解析json
         operateObj = JSON.parse(decodeAftrJson)
     } catch (error) {
-         // 如果失败 则尝试解码字符串后
+        // 如果失败 则尝试解码字符串后
         decodeAftrJson = decodeURIComponent(decodeAftrJson);
-         // 再解析json
+        // 再解析json
         operateObj = JSON.parse(decodeAftrJson)
     }
     // 调用方法名称
     let functionName = operateObj.functionName
     // 方法参数 例如：[1,2,3]
     let functionParam = operateObj.functionParam
-	let showRemtoeExecScriptContent = commonStorage.get("showRemtoeExecScriptContent") || false
+    let showRemtoeExecScriptContent = commonStorage.get("showRemtoeExecScriptContent") || false
     if (commonStorage.get("debugModel") && showRemtoeExecScriptContent) {
         // 日志
         console.log("远程执行方法", functionName, functionParam)
@@ -1137,6 +1162,13 @@ utilsObj.remoteHandler = (message) => {
  * 获取转换系数
  */
 utilsObj.getConvertCoefficient = () => {
+    // 设置了无需坐标转换
+    if (commonStorage.get("notNeedConvert")) {
+        return {
+            x: 1,
+            y: 1
+        }
+    }
     // 获取设备配置的分辨率
     let curScreenWith = device.width
     let curScreenHeight = device.height
@@ -1257,17 +1289,33 @@ utilsObj.scaleSmallImg = (targetImg) => {
  * @returns {x:int,y:int} 转换后的坐标
  */
 utilsObj.convertXY = (x, y, location) => {
-    let cofficient = utilsObj.getConvertCoefficient();
-    let result = { x: Math.round(x * cofficient.x), y: Math.round(y * cofficient.y) }
-    // 标准分辨率下 直接返回
-    if (utilsObj.getIsStandard()) {
+     // x轴最大值  竖屏为宽度  横屏为高度
+     let xMax = utilsObj.getOrientation() === 1 ? device.width : device.height
+     // y轴最大值  竖屏为高度 横屏为宽度
+     let yMax = utilsObj.getOrientation() === 1 ? device.height : device.width
+    // 超界限处理
+    let overHandler = (result)=>{
+        if(Number(result.x) < 0){
+            result.x = 0
+        }
+        if(Number(result.y) < 0){
+            result.y = 0
+        }
+        if(Number(result.x) > Number(xMax)){
+            result.x = Number(xMax)
+        }
+        if(Number(result.y) > Number(yMax)){
+            result.y = Number(yMax)
+        }
         return result;
     }
-    // x轴最大值  竖屏为宽度  横屏为高度
-    let xMax = utilsObj.getOrientation() === 1 ? utilsObj.getScreenWidth() : utilsObj.getScreenHeight()
-    // y轴最大值  竖屏为高度 横屏为宽度
-    let yMax = utilsObj.getOrientation() === 1 ? utilsObj.getScreenHeight() : utilsObj.getScreenWidth()
 
+    let cofficient = utilsObj.getConvertCoefficient();
+    let result = { x: Math.round(x * cofficient.x), y: Math.round(y * cofficient.y) }
+    // 标准分辨率下 或者设置了无需转换标识的 直接返回
+    if (utilsObj.getIsStandard() || commonStorage.get("notNeedConvert")) {
+        return overHandler(result);
+    }
     // 获取坐标偏移系数
     /*    let positionOffset = commonConstant.positionOffset[device.width + "_" + device.height]
        if (!positionOffset) {
@@ -1322,7 +1370,7 @@ utilsObj.convertXY = (x, y, location) => {
             result.y = result.y + yChange
         }
     }
-    return result
+    return overHandler(result);
 }
 
 /* 
@@ -2181,8 +2229,8 @@ utilsObj.regionalClickFeatures = (img, x1, y1, x2, y2, threshold, maxVal, matchi
  * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {*} successCall 成功回调
  */
-utilsObj.regionalClickImgOrFeatures = (img, x1, y1, x2, y2, threshold, maxVal,imgThreshold, matchingImgPath, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, successCall) => {
-     // 读取临时图片
+utilsObj.regionalClickImgOrFeatures = (img, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingImgPath, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, successCall) => {
+    // 读取临时图片
     let targetImg = utilsObj.includesContains(['http:', 'https:'], matchingImgPath) ? images.load(matchingImgPath) : images.read(matchingImgPath);
     // 进行一次匹配
     let macthingXy = utilsObj.regionalFindImgOrFeatures(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold)
@@ -3002,7 +3050,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2, openSp
             console.info("")
         }
         // 匹配目标orc对象
-        let targetOcr = openSplit ? utilsObj.splitConditionaMatching(ocrArr,'text',matchingContent) : ocrArr.find(item => item.text.indexOf(matchingContent)!==-1);
+        let targetOcr = openSplit ? utilsObj.splitConditionaMatching(ocrArr, 'text', matchingContent) : ocrArr.find(item => item.text.indexOf(matchingContent) !== -1);
         // 未匹配返回空
         if (!targetOcr) {
             return position;
@@ -3027,7 +3075,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2, openSp
             console.info("")
         }
         // 匹配目标orc对象
-        let targetOcr = openSplit ? utilsObj.splitConditionaMatching(ocrArr,'words',matchingContent) : ocrArr.find(item => item.words.indexOf(matchingContent)!==-1)
+        let targetOcr = openSplit ? utilsObj.splitConditionaMatching(ocrArr, 'words', matchingContent) : ocrArr.find(item => item.words.indexOf(matchingContent) !== -1)
         // 未匹配上，再次进行全屏匹配
         if (!targetOcr) {
             // 第二次文字识别
@@ -3043,7 +3091,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2, openSp
                 console.info("【TomatoOCR】：" + contentArr.join(''))
                 console.info("")
             }
-            targetOcr =openSplit ? utilsObj.splitConditionaMatching(ocrArr2,'words',matchingContent) :  ocrArr2.find(item =>item.words.indexOf(matchingContent)!==-1)
+            targetOcr = openSplit ? utilsObj.splitConditionaMatching(ocrArr2, 'words', matchingContent) : ocrArr2.find(item => item.words.indexOf(matchingContent) !== -1)
             // 未匹配返回空
             if (!targetOcr) {
                 return position;
@@ -3068,7 +3116,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2, openSp
             console.info("【谷歌OCR】：" + position.content)
             console.info("")
         }
-        let targetOcr = openSplit ? utilsObj.splitConditionaMatching(resultMlk,'text',matchingContent) : resultMlk.find(item => item.text.indexOf(matchingContent)!==-1)
+        let targetOcr = openSplit ? utilsObj.splitConditionaMatching(resultMlk, 'text', matchingContent) : resultMlk.find(item => item.text.indexOf(matchingContent) !== -1)
         // 未匹配返回空
         if (!targetOcr) {
             return position;
@@ -3088,7 +3136,7 @@ utilsObj.ocrGetPositionByContent = (img, matchingContent, x1, y1, x2, y2, openSp
  * @param {*} matchingKey  匹配原始数据key
  * @param {*} targetContent 目标内容
  */
-utilsObj.splitConditionaMatching = (sourceArr,matchingKey,targetContent)=>{
+utilsObj.splitConditionaMatching = (sourceArr, matchingKey, targetContent) => {
     //  1&2|3|4&5|6&7
     // [1,2],[3],[4,5],[6,7]
 
@@ -3096,7 +3144,7 @@ utilsObj.splitConditionaMatching = (sourceArr,matchingKey,targetContent)=>{
     let arr = [];
     // 根据|分隔成数组
     let arr1 = targetContent.split('|') || ['']
-    for(let i=0;i<arr1.length;i++){
+    for (let i = 0; i < arr1.length; i++) {
         // 再根据&分隔数组
         let arr2 = arr1[i].split('&');
         arr.push(arr2);
@@ -3104,29 +3152,29 @@ utilsObj.splitConditionaMatching = (sourceArr,matchingKey,targetContent)=>{
     // 已匹配对象
     let matchingObj = null;
     // 遍历源数组
-    for(let i=0;i<sourceArr.length;i++){
+    for (let i = 0; i < sourceArr.length; i++) {
         // 获取当前对象
         let obj = sourceArr[i];
         // 获取需要匹配内容
         let matchingContent = obj[matchingKey]
 
         // 遍历外层条件
-        for(let j=0;j<arr.length;j++){
+        for (let j = 0; j < arr.length; j++) {
             // 获取内层条件
             let tempArr = arr[j];
             // 符合条件数量
             let accordCount = 0;
             // 遍历内层条件
-            for(let m=0;m<tempArr.length;m++){
+            for (let m = 0; m < tempArr.length; m++) {
                 // 获取内层数据
                 let value = tempArr[m];
                 // 满足条件 记录数量
-                if(matchingContent.indexOf(value) !== -1){
-                    accordCount+=1;
+                if (matchingContent.indexOf(value) !== -1) {
+                    accordCount += 1;
                 }
             }
             // 如果全部满足条件
-            if(accordCount === tempArr.length){
+            if (accordCount === tempArr.length) {
                 // 设置匹配对象
                 matchingObj = obj;
                 // 停止循环
@@ -3134,7 +3182,7 @@ utilsObj.splitConditionaMatching = (sourceArr,matchingKey,targetContent)=>{
             }
         }
         // 如果当前已找到匹配对象 停止循环
-        if(matchingObj){
+        if (matchingObj) {
             break;
         }
     }
@@ -3222,7 +3270,7 @@ utilsObj.regionalAnalysisChartPosition2 = (img, x1, y1, x2, y2, threshold, maxVa
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【目标文字】" + matchingContent);
 
     // 根据内容获取匹配文字坐标
-    let matchingPosition = utilsObj.ocrGetPositionByContent(imgAfter, matchingContent, xy1["x"], xy1["y"], xy2["x"], xy2["x"],openSplit)
+    let matchingPosition = utilsObj.ocrGetPositionByContent(imgAfter, matchingContent, xy1["x"], xy1["y"], xy2["x"], xy2["x"], openSplit)
 
     // 绘制方框
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + matchingPosition.content);
@@ -3472,7 +3520,7 @@ utilsObj.regionalClickText2 = (img, x1, y1, x2, y2, threshold, maxVal, matchingC
  * @param {boolean} isOpenThreshold 是否开启阈值化
  * @param {Function} successCall 成功回调
  */
- utilsObj.regionalClickText3 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall) => {
+utilsObj.regionalClickText3 = (img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, successCall) => {
     // 灰度化、阈值化区域识别文字获取坐标
     let macthingXy = utilsObj.regionalAnalysisChartPosition2(img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, true)
     if (macthingXy) {
@@ -3732,7 +3780,7 @@ utilsObj.getDebugPageSettingUICache = () => {
         // 初始化
         ui["debugSleep"].attr("text", commonStorage.get("debugSleep") || "")
         let joinSettingKey = []
-        let select业务 = commonStorage.get("select业务") || "体力"
+        let select业务 = commonStorage.get("select业务")
         // 参与匹配的全部key
         let joinMatchingPageKey = utilsObj.getCurPageSettingKey(select业务)
         joinMatchingPageKey.forEach(item => {
@@ -3751,7 +3799,7 @@ utilsObj.setDebugPageSettingUICache = () => {
     if (debugModel) {
         // 初始化
         let joinSettingKey = []
-        let select业务 = commonStorage.get("select业务") || "体力"
+        let select业务 = commonStorage.get("select业务")
         // 参与匹配的key
         let joinMatchingPageKey = utilsObj.getCurPageSettingKey(select业务)
         joinMatchingPageKey.forEach(item => {
@@ -3768,7 +3816,7 @@ utilsObj.setDebugPageSettingUICache = () => {
  */
 utilsObj.getJoinMatchingPageKey = () => {
     let debugModel = commonStorage.get("debugModel")
-    let select业务 = commonStorage.get("select业务") || "体力"
+    let select业务 = commonStorage.get("select业务")
     // 参与匹配的key
     let joinMatchingPageKey = utilsObj.getCurPageSettingKey(select业务)
     if (debugModel) {
@@ -3788,11 +3836,11 @@ utilsObj.getJoinMatchingPageKey = () => {
 /**
  * 远程限制应用布局分析
  */
-utilsObj.remoteLimitLayoutAnalysis = (analysisRange)=>{
+utilsObj.remoteLimitLayoutAnalysis = (analysisRange) => {
     // 启动应用
     let exits = launchApp("限制应用布局分析")
     // 本地没有应用
-    if(!exits){
+    if (!exits) {
         toastLog("请下载并安装《限制应用布局分析》App")
         // 打开下载
         app.openUrl("http://121.4.241.250:5212/s/6o5IW")
@@ -3804,10 +3852,10 @@ utilsObj.remoteLimitLayoutAnalysis = (analysisRange)=>{
     let width = orientation === 1 ? device.width : device.height;
     let height = orientation === 1 ? device.height : device.width;
     // 读取临时图片
-    let targetImg = images.read("./res/分析布局悬浮窗标志.png"); 
+    let targetImg = images.read("./res/分析布局悬浮窗标志.png");
     // 灰度化、阈值化区域 识别图片
-    let macthingXy = utilsObj.regionalFindImg2(img, targetImg, 0,0,width,height, 190, 255, 0.7, false, false)
-    if(macthingXy && macthingXy.x !== -1){
+    let macthingXy = utilsObj.regionalFindImg2(img, targetImg, 0, 0, width, height, 190, 255, 0.7, false, false)
+    if (macthingXy && macthingXy.x !== -1) {
         utilsObj.randomClick(macthingXy.x + 100, macthingXy.y + 70, 1, false);
     }
     utilsObj.recycleNull(img);
@@ -3819,24 +3867,24 @@ utilsObj.remoteLimitLayoutAnalysis = (analysisRange)=>{
 /**
  * 获取根节点并写入本地文件
  */
-utilsObj.getRootNodeWriteLocal = (nodeType,analysisRange) => {
+utilsObj.getRootNodeWriteLocal = (nodeType, analysisRange) => {
     let localNodeFile = "/sdcard/autoJsTools/rootNode.json"
     files.ensureDir(localNodeFile)
     console.log(analysisRange)
-    if(!analysisRange){
+    if (!analysisRange) {
         analysisRange = "active";
     }
 
     toastLog("正在分析布局,请稍候")
     if (nodeType === "tree") {
         // 获取根节点
-        let rootNodeObj = utilsObj.getRootNodeByTree(true,analysisRange);
+        let rootNodeObj = utilsObj.getRootNodeByTree(true, analysisRange);
         //写入文件
-        files.write(localNodeFile, JSON.stringify(rootNodeObj,'','\t'));
+        files.write(localNodeFile, JSON.stringify(rootNodeObj, '', '\t'));
     } else {
         let nodeObjArr = utilsObj.getRootNodeByArr();
         //写入文件
-        files.write(localNodeFile, JSON.stringify(nodeObjArr,'','\t'));
+        files.write(localNodeFile, JSON.stringify(nodeObjArr, '', '\t'));
     }
 }
 
@@ -3857,7 +3905,7 @@ utilsObj.remoteUploadRootNodeJsonToServer = () => {
 /**
  * 上传节点预览图片
  */
-utilsObj.uploadNodePreviewImg = ()=>{
+utilsObj.uploadNodePreviewImg = () => {
     try {
         let img = images.captureScreen()
         let tempImgPath = '/sdcard/screenImg/nodePreviewImg.jpg'
@@ -3866,11 +3914,11 @@ utilsObj.uploadNodePreviewImg = ()=>{
         files.remove(tempImgPath)
         sleep(10)
         images.save(img, tempImgPath, "jpg", "100");
-        utils.uploadFileToServer(tempImgPath, deviceUUID + '/nodePreviewImg.jpg', (a) => {
+        utilsObj.uploadFileToServer(tempImgPath, deviceUUID + '/nodePreviewImg.jpg', (a) => {
         })
         img.recycle()
     } catch (error) {
-        console.error("预览节点图片错误",error)
+        console.error("预览节点图片错误", error)
     }
 }
 
@@ -3880,8 +3928,8 @@ utilsObj.uploadNodePreviewImg = ()=>{
  * @param {*} isRemoveSouceNode 是否删除原节点
  * @returns 
  */
-utilsObj.getRootNodeByTree = (isRemoveSouceNode,analysisRange) => {
-    if(analysisRange === 'active'){
+utilsObj.getRootNodeByTree = (isRemoveSouceNode, analysisRange) => {
+    if (analysisRange === 'active') {
         // 获取根节点
         let windowRoot = auto.rootInActiveWindow;
         if (!windowRoot) {
@@ -3901,14 +3949,14 @@ utilsObj.getRootNodeByTree = (isRemoveSouceNode,analysisRange) => {
         // 返回根节点
         return rootNodeObj;
     } else {
-        auto.setWindowFilter(function(window){
+        auto.setWindowFilter(function (window) {
             //不管是如何窗口，都返回true，表示在该窗口中搜索
             return true;
         });
         // 获取全部窗口数组
         let windosRootArr = auto.windowRoots;
         let rootNodeObjArr = [];
-        for(let i=0;i<windosRootArr.length;i++){
+        for (let i = 0; i < windosRootArr.length; i++) {
             let windowRoot = windosRootArr[i];
             if (!windowRoot) {
                 continue;
@@ -4046,16 +4094,16 @@ utilsObj.convertNodeToObj = (UINode) => {
     obj.id = UINode.id();
     let bounds = UINode.bounds();
     let boundsInfo = {
-        left:bounds.left,
-        top:bounds.top,
-        right:bounds.right,
-        bottom:bounds.bottom
+        left: bounds.left,
+        top: bounds.top,
+        right: bounds.right,
+        bottom: bounds.bottom
     }
-    
+
     obj.depth = UINode.depth();
     obj.index = 0;
     obj.boundsInScreen = UINode.bounds();
-    
+
     obj.sourceNodeId = UINode.sourceNodeId();
     obj.packageName = UINode.packageName();
     obj.className = UINode.className();
@@ -4063,7 +4111,7 @@ utilsObj.convertNodeToObj = (UINode) => {
     obj.desc = UINode.desc();
     obj.indexInParent = UINode.indexInParent();
     obj.boundsInParent = UINode.boundsInParent();
-    
+
     obj.boundsInfo = boundsInfo;
     obj.mDepth = UINode.depth();
     obj.checkable = UINode.checkable();
@@ -4087,35 +4135,35 @@ utilsObj.convertNodeToObj = (UINode) => {
     obj.row = UINode.row();
     obj.rowCount = UINode.rowCount();
     obj.rowSpan = UINode.rowSpan();
-    obj.nodeKey = new Date().getTime() + "_" +  randomNum(10) + "_" + obj.className
+    obj.nodeKey = new Date().getTime() + "_" + randomNum(10) + "_" + obj.className
 
     let label = "";
-    if(obj.className){
+    if (obj.className) {
         label += obj.className
     }
     let arr = []
-    if(obj.id){
-        arr.push("id="+obj.id);
+    if (obj.id) {
+        arr.push("id=" + obj.id);
     }
-    if(obj.scrollable){
+    if (obj.scrollable) {
         arr.push("scrollable");
     }
-    if(obj.text){
-        arr.push("text="+obj.text);
+    if (obj.text) {
+        arr.push("text=" + obj.text);
     }
-    if(obj.desc){
-        arr.push("desc="+obj.desc);
+    if (obj.desc) {
+        arr.push("desc=" + obj.desc);
     }
-    if(obj.clickable){
+    if (obj.clickable) {
         arr.push("clickable");
     }
-    if(obj.longClickable){
+    if (obj.longClickable) {
         arr.push("longClickable");
     }
-    if(obj.visible){
+    if (obj.visible) {
         arr.push("visible");
     }
-    if(arr && arr.length){
+    if (arr && arr.length) {
         label += JSON.stringify(arr);
     }
     obj.label = label
@@ -4123,13 +4171,13 @@ utilsObj.convertNodeToObj = (UINode) => {
 }
 
 
-function randomNum(n){
+function randomNum(n) {
     var res = "";
-    for(var i=0;i<n;i++){
-      res += Math.floor(Math.random()*10);
+    for (var i = 0; i < n; i++) {
+        res += Math.floor(Math.random() * 10);
     }
     return res;
-  }
-  
+}
+
 
 module.exports = utilsObj

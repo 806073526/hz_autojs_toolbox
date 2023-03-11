@@ -155,7 +155,7 @@ function initUiSetting() {
                     <text text="标准高度:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="standardHeight" inputType="number" hint="请输入标准高度" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
-                <horizontal h="80px">
+                <horizontal h="80px" visibility="gone">
                     <text text="标准坐标转换:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <Switch id="standardConvert" checked="false" h="*" w="*" gravity="left|center" layout_weight="2" />
                 </horizontal>

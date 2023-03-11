@@ -62,6 +62,23 @@ events.broadcast.on("orientationchange", function () {
   sendDeviceToServer()
 });
 
+// 发送消息到web端
+events.broadcast.on("sendMsgToWeb", (message) => {
+  // 发送消息
+  socketTask.send(message)
+})
+
+// 发送消息到web端更新业务key
+events.broadcast.on("sendMsgToWebUpdateServiceKey", (messageJson) => {
+  // 传入json 如 {"deviceUUID":"","serviceKey":"","serviceValue":""}
+  let base64String = $base64.encode(messageJson,'utf-8')
+  // 发送消息
+  socketTask.send('{"action":"updateServiceKey","message":"' + base64String + '"}')
+})
+
+
+
+
 // 发送消息到服务端
 function sendDeviceToServer(){
   // 其他属性
