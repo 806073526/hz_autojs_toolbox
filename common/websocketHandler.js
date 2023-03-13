@@ -227,7 +227,10 @@ websocketHandler.reConnectSocket = () => {
 }
 // 发送消息
 websocketHandler.sendMessage = (message) => {
-  console.log("websocket发送消息:" + message)
+  let webSocketLog = commonStorage.get('webSocketLog')
+  if (webSocketLog) {
+    console.log("websocket发送消息:" + message)
+  }
   socketTask.send(message)
 }
 // 消息处理
