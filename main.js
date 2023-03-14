@@ -324,6 +324,10 @@ threads.start(() => {
         console.error("错误", error)
     }
 })
+if (!$power_manager.isIgnoringBatteryOptimizations()) {
+    console.log("未开启忽略电池优化，尝试申请权限");
+    $power_manager.requestIgnoreBatteryOptimizations();
+}
 // 监听广播
 var receiver = new JavaAdapter(android.content.BroadcastReceiver, {
     onReceive: function (context, intent) {

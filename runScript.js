@@ -7,6 +7,11 @@ let deviceParam = {
     appSpace:500
 }
 let utils = require('./common/utils.js')
+let config = require("./common/config.js")
+let commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
+if(["HUAWEI"].includes(device.brand)){
+    commonStorage.put("otherClickText","允许");
+}
 let deviceUUID = utils.getDeviceUUID()
 // 引入websocket
 let websocketHandler = require('./common/websocketHandler.js')
@@ -41,9 +46,21 @@ events.broadcast.on("startPreviewDevice", (params) => {
         deviceThread.interrupt()
     }
     console.log("开启自动点击线程")
+    
     clickThread = threads.start(function () {
         while (true) {
-            text("立即开始").click()
+            let click1 = text("立即开始");
+            if(click1){
+                click1.click()
+            }
+            let otherClickText = commonStorage.get("otherClickText")
+            if(otherClickText){
+                let click2 = text(otherClickText);
+                if(click2){
+                    click2.clickCenter()
+                }
+            }
+            sleep(10)
         }
     });
     deviceThread = threads.start(() => {
@@ -98,7 +115,18 @@ events.broadcast.on("stopPreviewDevice", function () {
 // 点击立即开始
 threads.start(function () {
     while (true) {
-        text("立即开始").click()
+        let click1 = text("立即开始");
+        if(click1){
+            click1.click()
+        }
+        let otherClickText = commonStorage.get("otherClickText")
+        if(otherClickText){
+            let click2 = text(otherClickText);
+            if(click2){
+                click2.clickCenter()
+            }
+        }
+        sleep(10)
     }
 });
 sleep(1000)
