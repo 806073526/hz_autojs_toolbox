@@ -49,25 +49,24 @@ events.broadcast.on("startPreviewDevice", (params) => {
     
     clickThread = threads.start(function () {
         while (true) {
-            let click1 = text("立即开始");
+            let click1 = text("立即开始").findOne(100);
             if(click1){
                 click1.click()
             }
             let otherClickText = commonStorage.get("otherClickText")
             if(otherClickText){
-                let click2 = text(otherClickText);
-                if(click2){
-                    click2.clickCenter()
-                }
+              let click2 = text(otherClickText).findOne(100);
+               if(click2){
+                 click2.click()
+             }
             }
-            sleep(10)
         }
     });
     deviceThread = threads.start(() => {
         try {
             console.log("重开权限")
             images.stopScreenCapture()
-            images.requestScreenCapture()
+            images.requestScreenCapture({orientation:utils.getOrientation()})
         } catch (error) {
             console.error("重开截图权限错误",error)
         }
@@ -115,24 +114,23 @@ events.broadcast.on("stopPreviewDevice", function () {
 // 点击立即开始
 threads.start(function () {
     while (true) {
-        let click1 = text("立即开始");
+        let click1 = text("立即开始").findOne(100);
         if(click1){
             click1.click()
         }
         let otherClickText = commonStorage.get("otherClickText")
         if(otherClickText){
-            let click2 = text(otherClickText);
-            if(click2){
-                click2.clickCenter()
-            }
+           let click2 = text(otherClickText).findOne(100);
+           if(click2){
+             click2.click()
+           }
         }
-        sleep(10)
     }
 });
 sleep(1000)
 try {
     images.stopScreenCapture()
-    images.requestScreenCapture()
+    images.requestScreenCapture({orientation:utils.getOrientation()})
 } catch (error) {
         console.error("主程序请求截图错误", error)
 }

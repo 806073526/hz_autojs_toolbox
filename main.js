@@ -147,6 +147,14 @@ function initUiSetting() {
                     <text text="远程脚本日志:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <Switch id="showRemtoeExecScriptContent" checked="false" h="*" w="*" gravity="left|center" layout_weight="2" />
                 </horizontal>
+				<horizontal h="80px">
+                    <text text="显示截图配置:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <Switch id="显示截图配置" checked="false" h="*" w="*" gravity="left|center" layout_weight="2" />
+                </horizontal>
+				<horizontal h="80px" id="截图点击文字" visibility="gone">
+                    <text text="截图点击文字:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <input id="otherClickText" inputType="text" hint="申请截图权限时要点击的文字" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
+                </horizontal>
                 <horizontal h="80px">
                     <text text="标准宽度:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="standardWidth" inputType="number" hint="请输入标准宽度" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
@@ -192,6 +200,12 @@ function initUiSetting() {
         ui["调试延时"].attr("visibility", checked ? "visible" : "gone");
 		ui["远程脚本日志"].attr("visibility", checked ? "visible" : "gone");
     })
+	
+	// 显示截图配置监听
+	 utils.switchChangeEvent("显示截图配置", (checked) => {
+        ui["截图点击文字"].attr("visibility", checked ? "visible" : "gone");
+    })
+
 
     // 读取公共缓存数据
     utils.getUICacheData(commonConstant.commonSettingKey, commonStorage)

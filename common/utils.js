@@ -130,6 +130,13 @@ utilsObj.textFindOneClick = (content, times) => {
 utilsObj.getOrientation = () => {
     // 1 竖屏 2横屏
     let orientation = context.getResources().getConfiguration().orientation
+
+    // 宽大于高 平板
+    if(device.width > device.height){
+        // 转换一下方向
+        orientation = orientation === 1 ? 2 : 1
+    // 高大于宽 手机
+    }
     return orientation;
 }
 
@@ -1139,7 +1146,7 @@ utilsObj.remoteHandler = (message) => {
         if (['remoteClipGrayscaleAndThresholdToServer', 'remoteClipGrayscaleAndThresholdAnalysisChartToServer'].includes(functionName)) {
             try {
                 images.stopScreenCapture()
-                images.requestScreenCapture()
+                images.requestScreenCapture({orientation:utilsObj.getOrientation()})
                 sleep(500)
             } catch (error) {
                 if (commonStorage.get('debugModel')) {

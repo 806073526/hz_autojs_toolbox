@@ -2,6 +2,7 @@ importClass("android.content.pm.PackageManager");
 importClass("android.provider.Settings");
 let myPackageName = context.getPackageName();
 let obj = {}
+let utils = require('./common/utils.js')
 obj.init = function () {
     refreshState();
     //可以在回到界面时，刷新开关状态
@@ -63,7 +64,7 @@ obj.init = function () {
         threads.start(function () {
             try {
                 if (checked) {
-                    images.requestScreenCapture();
+                    images.requestScreenCapture({orientation:utils.getOrientation()});
                 } else {
                     $images.stopScreenCapture();
                 }

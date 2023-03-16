@@ -6,6 +6,8 @@ let commonSettingKey = [
 	{ key: 'showRemtoeExecScriptContent', type: "开关" },
     { key: '自动运行', type: "开关" },
     /* { key: '文字识别插件', type: "单选框" }, */
+    { key: '显示截图配置', type: "开关"},
+    { key: 'otherClickText', type: "输入框" },
     { key: 'standardWidth', type: "输入框" },
     { key: 'standardHeight', type: "输入框" },
     { key: 'standardConvert', type: "开关" },
