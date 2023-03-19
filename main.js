@@ -68,7 +68,7 @@ ui.layout(
                             <button id="loadSetting" layout_gravity="center" text="载入配置" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
                             <button id="saveSetting" layout_gravity="center" text="保存配置" style="Widget.AppCompat.Button.Colored" bg="#ff5723" marginLeft="1px" marginRight="1px" />
                             <button id="startScript" layout_gravity="center" text="启动脚本" style="Widget.AppCompat.Button.Colored" bg="#04a9f5" marginLeft="1px" marginRight="1px"/>
-							<button id="runUi" layout_gravity="center" text="运行程序" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
+							<button id="runUi" layout_gravity="center" text="脚本管理" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
                         </horizontal>
                     </vertical>
                 </frame>
@@ -255,12 +255,7 @@ ui.startScript.on("click", () => {
 })
 
 ui.runUi.on("click", () => {
-	let uiPath = commonStorage.get('uiPath') || "/sdcard/appSync/main.js"
-	if(files.exists(uiPath)){
-		 engines.execScriptFile(uiPath)
-	} else {
-		toastLog('本地文件'+uiPath+'不存在,请先创建!')
-	}
+  engines.execScriptFile("./runScript.js")
 })
 
 ui.help.on("click", () => {

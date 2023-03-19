@@ -139,9 +139,9 @@ obj.init = function () {
     }
     function openAccessibility() {
         let mServices = ":" + myPackageName + "/com.stardust.autojs.core.accessibility.AccessibilityService";
-        let enabledServices = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES).replace(new RegExp(mServices, "g"), "");
+        let enabledServices = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+        enabledServices = enabledServices ? enabledServices.replace(new RegExp(mServices, "g"), "") : "";
         Settings.Secure.putString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, "");
-        //Settings.Secure.putString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, enabledServices);
         Settings.Secure.putString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, enabledServices + mServices);
     }
 
