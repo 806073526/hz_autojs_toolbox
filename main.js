@@ -110,7 +110,8 @@ ui["DPI"].attr("text", densityDpi)
 
 // 当前版本信息
 let curVersionName = app.versionName
-ui["当前版本号"].attr("text", curVersionName)
+let hotUpdateVersion = commonStorage.get("hotUpdateVersion")
+ui["当前版本号"].attr("text", curVersionName + (hotUpdateVersion ? `[${hotUpdateVersion}]` : ""))
 
 // 初始化ui设置
 function initUiSetting() {
