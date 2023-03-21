@@ -217,6 +217,10 @@ function initUiSetting() {
         if (自动运行) {
             toastLog("自动运行")
             startScriptFun()
+			// 开启了自动运行后回到主页
+			if(auto.service){
+				home();
+			}
         }
     }
 }

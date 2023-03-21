@@ -22,6 +22,8 @@ var deviceThread = null
 var clickThread = null
 // 预览设备
 events.broadcast.on("startPreviewDevice", (params) => {
+	// 唤醒设备
+	device.wakeUpIfNeeded();
     if (params) {
         // 解密后字符串
         let decodeAftrJson = $base64.decode(params)
@@ -106,6 +108,8 @@ events.broadcast.on("startPreviewDevice", (params) => {
 });
 // 停止预览设备
 events.broadcast.on("stopPreviewDevice", function () {
+	// 唤醒设备
+	device.wakeUpIfNeeded();
     if(deviceThread){
         toastLog("停止预览")
         deviceThread.interrupt()

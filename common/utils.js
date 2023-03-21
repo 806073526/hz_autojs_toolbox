@@ -1144,7 +1144,9 @@ utilsObj.remoteHandler = (message) => {
     }
     threads.start(() => {
         if (['remoteClipGrayscaleAndThresholdToServer', 'remoteClipGrayscaleAndThresholdAnalysisChartToServer'].includes(functionName)) {
-            try {
+            // 唤醒设备
+			device.wakeUpIfNeeded();
+			try {
                 images.stopScreenCapture()
                 images.requestScreenCapture({orientation:utilsObj.getOrientation()})
                 sleep(500)
