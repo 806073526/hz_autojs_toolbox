@@ -1,0 +1,7 @@
+adb方式开启
+1、手机数据线连接电脑，开启开发者模式，启用USB调试(USB安全调试)。
+2、在电脑中找到adb.exe的目录，cmd进入
+3、cmd执行adb tcpip 5555
+4、手机端wifi查询本地ip 以下的ip为此步骤查询到的ip
+5、cmd执行adb connect 192.168.2.102
+6、cmd执行adb -s 192.168.2.102:5555 shell pm grant com.zjh336.cn.tools android.permission.WRITE_SECURE_SETTINGS
