@@ -360,5 +360,66 @@ events.on("exit", function () {
     receiver && context.unregisterReceiver(receiver);
 });
 
+function strToArr(str) {
+	if (!str) {
+		return [];
+	}
+	//防止保活时,连环回调放入空字符,去掉末尾没用的字符串
+	return str.replace(/:$/, "").split(":");
+}
+try{
+importClass(android.os.Handler);
+importClass(android.database.ContentObserver);
+importClass(android.provider.Settings);
+
+let curPackage = auto.service ? currentPackage() : "com.zjh336.cn.tools"
+
+//保活白名单数组,也可以时其他应用的服务名,这里是autojspro的
+const whiteList = [curPackage+"/com.stardust.autojs.core.accessibility.AccessibilityService"];
+const contentResolver = context.getContentResolver();
+let lastArr = strToArr(Settings.Secure.getString(contentResolver, "enabled_accessibility_services"));
+let contentObserver = JavaAdapter(
+	ContentObserver,
+	{
+		onChange(b) {
+			let service = "";
+			let str = Settings.Secure.getString(contentResolver, "enabled_accessibility_services");
+			let newArr = strToArr(str);
+			if (newArr.length > lastArr.length) {
+				newArr.some(item => {
+					service = item;
+					return !lastArr.includes(item);
+				});
+				console.log("开启了----", service);
+			} else if (newArr.length < lastArr.length) {
+				lastArr.some(item => {
+					service = item;
+					return !newArr.includes(item);
+				});
+				//这里可以做一些保活处理
+				if (service && whiteList.includes(service)) {
+					try {
+						newArr.push(service);
+						let success = Settings.Secure.putString(contentResolver, "enabled_accessibility_services", newArr.join(":"));
+						console.log(`${success ? "保活成功" : "保活失败"}----${service}`);
+					} catch (error) {
+						console.log("没有权限----", error);
+					}
+				} else {
+					console.log("关闭了----", service);
+				}
+			}
+			lastArr = newArr;
+		},
+	},
+	new Handler()
+);
+contentResolver.registerContentObserver(Settings.Secure.getUriFor("enabled_accessibility_services"), true, contentObserver);
+events.on("exit", () => {
+	contentResolver.unregisterContentObserver(contentObserver);
+});
+}catch(e){
+	console.error(e);
+}
 //保持脚本运行
 setInterval(() => { }, 1000);
