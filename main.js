@@ -260,7 +260,7 @@ ui.startScript.on("click", () => {
 })
 
 ui.runUi.on("click", () => {
-  engines.execScriptFile("./fileMananger.js")
+  engines.execScriptFile("./fileManager.js")
 })
 
 ui.help.on("click", () => {
