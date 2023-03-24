@@ -370,8 +370,6 @@ function strToArr(str) {
 try{
 importClass(android.os.Handler);
 importClass(android.database.ContentObserver);
-importClass(android.provider.Settings);
-
 let curPackage = auto.service ? currentPackage() : "com.zjh336.cn.tools"
 
 //保活白名单数组,也可以时其他应用的服务名,这里是autojspro的
