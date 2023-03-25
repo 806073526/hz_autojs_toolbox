@@ -16,16 +16,13 @@ config.webSocketBaseUrl = "ws://127.0.0.1:9998/autoJsWs"
 
 config.getHttpBaseUrl = ()=>{
     let remoteIp = commonStorage.get("服务端IP")
-    return remoteIp ? "http://"+remoteIp+":9998" : config.httpBaseUrl
     let remotePort = commonStorage.get("服务端Port")||9998
-
     return remoteIp ? "http://"+remoteIp+":" + remotePort: config.httpBaseUrl
 }
 
 
 config.getWebSocketBaseUrl = ()=>{
     let remoteIp = commonStorage.get("服务端IP")
-    return remoteIp ? "ws://"+remoteIp+":9998/autoJsWs" : config.webSocketBaseUrl
     let remotePort = commonStorage.get("服务端Port")||9998
     return remoteIp ? "ws://"+remoteIp+":"+remotePort+"/autoJsWs" : config.webSocketBaseUrl
 }
