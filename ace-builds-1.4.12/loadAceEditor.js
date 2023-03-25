@@ -19,7 +19,7 @@ function callJavaScript(webViewWidget, script, callback) {
             }
         }));
     } catch (e) {
-        console.error("执行JavaScript失败");
+        //console.error("执行JavaScript失败");
         console.trace(e);
     }
 }
@@ -137,7 +137,7 @@ function AutoX() {
 };
 
 function bridgeHandler_handle(cmd, params) {
-    console.log('bridgeHandler处理 cmd=%s, params=%s', cmd, JSON.stringify(params));
+    // console.log('bridgeHandler处理 cmd=%s, params=%s', cmd, JSON.stringify(params));
     let fun = this[cmd];
     if (!fun) {
         throw new Error("cmd= " + cmd + " 没有定义实现");
@@ -167,8 +167,9 @@ function execJSCallback(val) {
         switch (result.callback) {
             case "saveFile":
             {
-                console.log("保存文件: " + result.filePath);
+                // console.log("保存文件: " + result.filePath);
                 files.write(result.filePath, result.content);
+				toastLog("保存成功")
                 break;
             }
             case "isTextChanged":

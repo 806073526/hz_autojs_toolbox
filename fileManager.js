@@ -26,13 +26,20 @@ var StartDirFile = new java.io.File("/sdcard/appSync");
 var CurrentDirFile = new java.io.File(StartDirFile);
 updateFileData(CurrentDirFile);
 
+
 ui.list.on("item_click", function (item, i, itemView, listView) {
     var file = item.file;
     if (file.isDirectory()) {
         CurrentDirFile = file;
         updateFileData(CurrentDirFile);
     } else if (file.isFile()) {
-        if (file.name.endsWith(".js")) {
+		let suffix = "";
+		let fileName = file.name;		
+		if(fileName.indexOf('.')!==-1){
+			suffix = fileName.substring(fileName.lastIndexOf('.'),fileName.length)
+		}
+		let enableArr = ['.js','.json','.css','.html','.log','.txt','.xml']
+        if (enableArr.includes(suffix)) {
             let aceEditorStorage = storages.create("aceEditor");
             aceEditorStorage.put("filePath", file.toString());
             engines.execScriptFile("./ace-builds-1.4.12/loadAceEditor.js");
@@ -41,6 +48,9 @@ ui.list.on("item_click", function (item, i, itemView, listView) {
         }
     };
 });
+
+
+
 
 ui.list.on("item_bind", (itemView, itemHolder) => {
     itemView.run.on("click", () => {

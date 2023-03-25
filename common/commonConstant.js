@@ -12,6 +12,7 @@ let commonSettingKey = [
     { key: 'standardHeight', type: "输入框" },
     { key: 'standardConvert', type: "开关" },
     { key: '服务端IP', type: "输入框" },
+	{ key: '服务端Port', type: "输入框" },
     { key: '访问密码', type: "输入框" },
     { key: 'x偏移系数', type: "输入框" },
     { key: 'y偏移系数', type: "输入框" }

@@ -125,6 +125,10 @@ function initUiSetting() {
                     <input id="服务端IP" inputType="text" hint="请输入服务端ip" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="80px">
+                    <text text="服务端Port:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <input id="服务端Port" inputType="text" hint="服务端Port,默认9998" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
+                </horizontal>
+                <horizontal h="80px">
                     <text text="访问密码:" textSize="16sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="访问密码" inputType="text" hint="WEB端操作设备所需" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
