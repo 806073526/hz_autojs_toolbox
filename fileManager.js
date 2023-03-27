@@ -114,7 +114,7 @@ function execScriptFile(scriptFile) {
     let offset = scriptFileStr.lastIndexOf("/");
     let scriptFileDir = scriptFileStr.slice(0, offset + 1);
 	toastLog("运行"+scriptFileStr+"成功")
-    engines.execScriptFile(scriptFile, { path: [scriptFileDir] })
+    engines.execScriptFile(scriptFileStr, { path: [scriptFileDir] })
 }
 
 function getFileExtension(fileName) {
