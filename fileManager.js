@@ -115,7 +115,7 @@ function execScriptFile(scriptFile) {
     scriptFileDir = scriptFileStr.slice(0, offset + 1);
 
     engines.execScriptFile(scriptFile, { path: [scriptFileDir] })
-	toastLog("运行"+scripteFile+"成功")
+	toastLog("运行"+scriptFile+"成功")
 }
 
 function getFileExtension(fileName) {
