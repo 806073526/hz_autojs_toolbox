@@ -110,12 +110,11 @@ function isScriptFile(file) {
 }
 
 function execScriptFile(scriptFile) {
-    scriptFileStr = scriptFile.toString();
-    offset = scriptFileStr.lastIndexOf("/");
-    scriptFileDir = scriptFileStr.slice(0, offset + 1);
-
+    let scriptFileStr = scriptFile.toString();
+    let offset = scriptFileStr.lastIndexOf("/");
+    let scriptFileDir = scriptFileStr.slice(0, offset + 1);
+	toastLog("运行"+scriptFileStr+"成功")
     engines.execScriptFile(scriptFile, { path: [scriptFileDir] })
-	toastLog("运行"+scriptFile+"成功")
 }
 
 function getFileExtension(fileName) {
