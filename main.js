@@ -45,7 +45,7 @@ ui.layout(
                     </vertical>
                 </frame>
                 <frame>
-                    <vertical padding="15 10" bg="#eeeeee">
+                    <vertical padding="15 10" bg="#e3e0e0">
                         <card contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px">
                             <vertical margin="5 2" layout_gravity="center" bg="#ffffff">
                                 <Switch h="30" text="无障碍服务" id="autoService" checked="true" />
@@ -59,7 +59,7 @@ ui.layout(
                     </vertical>
                 </frame>
                 <frame>
-                    <vertical padding="15 10" bg="#eeeeee">
+                    <vertical padding="15 10" bg="#e3e0e0">
                         <ScrollView h="auto" layout_weight="25">
                             <vertical id="uiView">
                             </vertical>
