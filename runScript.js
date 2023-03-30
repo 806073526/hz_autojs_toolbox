@@ -101,6 +101,13 @@ events.broadcast.on("startPreviewDevice", (params) => {
                 sleep(deviceParam.appSpace) 
             } catch (error) {
                 console.error("预览错误",error)
+                try {
+                    console.log("重开权限")
+                    images.stopScreenCapture()
+                    images.requestScreenCapture({orientation:utils.getOrientation()})
+                } catch (error1) {
+                    console.error("重开截图权限错误",error1)
+                }
             }
 
         }

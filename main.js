@@ -8,7 +8,7 @@ ui.layout(
             </appbar>
             <viewpager id="viewpager">
                 <frame>
-                    <vertical padding="15 10" bg="#eeeeee">
+                    <vertical padding="15 10" bg="#e3e0e0">
                         <ScrollView h="auto" layout_weight="25">
                             <vertical h="auto" layout_weight="25">
                                 <card contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px">
@@ -39,8 +39,8 @@ ui.layout(
                             </vertical>
                         </ScrollView>
                         <horizontal layout_weight="1" gravity="center" w="*" marginTop="30px">
-                            <button id="help" layout_gravity="center"  text="使用介绍" w="300px" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
-                            <button id="gitee" layout_gravity="center"  text="开源地址" w="300px" marginLeft="50px" style="Widget.AppCompat.Button.Colored" bg="#ff5723" />
+                            <button id="help" layout_gravity="center"  text="使用介绍" w="300px" style="Widget.AppCompat.Button.Colored" bg="#827f7f" foreground="?selectableItemBackground"/>
+                            <button id="gitee" layout_gravity="center"  text="开源地址" w="300px" marginLeft="50px" style="Widget.AppCompat.Button.Colored" bg="#ff5723" foreground="?selectableItemBackground"/>
                         </horizontal>
                     </vertical>
                 </frame>
@@ -65,15 +65,15 @@ ui.layout(
                             </vertical>
                         </ScrollView>
                         <horizontal layout_weight="1" gravity="center" marginTop="30px">
-                            <button id="loadSetting" layout_gravity="center" text="载入配置" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
-                            <button id="saveSetting" layout_gravity="center" text="保存配置" style="Widget.AppCompat.Button.Colored" bg="#ff5723" marginLeft="1px" marginRight="1px" />
-                            <button id="startScript" layout_gravity="center" text="启动脚本" style="Widget.AppCompat.Button.Colored" bg="#04a9f5" marginLeft="1px" marginRight="1px"/>
-							<button id="runUi" layout_gravity="center" text="脚本管理" style="Widget.AppCompat.Button.Colored" bg="#827f7f" />
+                            <button id="loadSetting" layout_gravity="center" text="载入配置" style="Widget.AppCompat.Button.Colored" bg="#827f7f" foreground="?selectableItemBackground"/>
+                            <button id="saveSetting" layout_gravity="center" text="保存配置" style="Widget.AppCompat.Button.Colored" bg="#ff5723" marginLeft="1px" marginRight="1px" foreground="?selectableItemBackground"/>
+                            <button id="startScript" layout_gravity="center" text="启动脚本" style="Widget.AppCompat.Button.Colored" bg="#04a9f5" marginLeft="1px" marginRight="1px" foreground="?selectableItemBackground"/>
+							<button id="runUi" layout_gravity="center" text="脚本管理" style="Widget.AppCompat.Button.Colored" bg="#827f7f" foreground="?selectableItemBackground"/>
                         </horizontal>
                     </vertical>
                 </frame>
                 <frame>
-                    <button id="clearLog" text="清空日志" gravity="center" layout_gravity="right" padding="0" h="40" w="80" />
+                    <button id="clearLog" text="清空日志" gravity="center" layout_gravity="right" padding="0" h="40" w="80" foreground="?selectableItemBackground"/>
                     <globalconsole id="globalconsole" w="*" h="*" />
                 </frame>
             </viewpager>
