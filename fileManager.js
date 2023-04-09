@@ -20,7 +20,7 @@ ui.layout(
     </vertical>
 );
 
-files.createWithDirs("/sdcard/appSync");
+files.createWithDirs("/sdcard/appSync/");
 var StartDirFile = new java.io.File("/sdcard/appSync");
 
 var CurrentDirFile = new java.io.File(StartDirFile);
