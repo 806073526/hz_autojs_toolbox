@@ -4034,7 +4034,7 @@ utilsObj.recursionClearSouceNode = (childNodeObj) => {
  * 递归获取子节点
  * @param {} childNode 
  * @returns 
- */
+ 
 utilsObj.recursionNode = (childNodeObj) => {
     // 获取原始节点  
     let sourceNode = childNodeObj.sourceNode
@@ -4068,8 +4068,33 @@ utilsObj.recursionNode = (childNodeObj) => {
     // 返回根节点
     return childNodeObj;
 }
+*/
 
-
+// 使用堆栈模拟递归调用，实现尾递归
+utilsObj.recursionNode = (childNodeObj) => {
+  let stack = [childNodeObj]; // 初始化堆栈，将初始节点压入堆栈
+  while (stack.length > 0) { // 当堆栈不为空时，循环处理节点
+    let node = stack.pop(); // 从堆栈中弹出一个节点
+    let sourceNode = node.sourceNode; // 获取节点对应的源节点
+    let childCount = sourceNode.childCount(); // 获取源节点的子节点数量
+    if (childCount == null || childCount === 0) { // 如果子节点数量为0，则跳过
+      continue;
+    }
+    let children = node.children ? node.children : []; // 初始化子节点数组
+    for (let i = 0; i < childCount; i++) { // 遍历源节点的子节点
+      let childNode1 = sourceNode.child(i); // 获取子节点
+      if (!childNode1) { // 如果子节点不存在，则跳过
+        continue;
+      }
+      let childNodeObj1 = utilsObj.convertNodeToObj(childNode1); // 将子节点转换为对象
+      childNodeObj1.sourceNode = childNode1; // 将子节点的源节点保存到对象中
+      children.push(childNodeObj1); // 将子节点对象添加到子节点数组中
+      stack.push(childNodeObj1); // 将子节点对象压入堆栈中，以便后续处理
+    }
+    node.children = children; // 将子节点数组保存到节点对象中
+  }
+  return childNodeObj; // 返回处理后的节点对象
+}
 
 // 
 function findViewNodes(viewNode) {
