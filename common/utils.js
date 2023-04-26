@@ -3918,6 +3918,17 @@ utilsObj.remoteUploadRootNodeJsonToServer = () => {
  */
 utilsObj.uploadNodePreviewImg = () => {
     try {
+		// 唤醒设备
+		device.wakeUpIfNeeded();
+		try {
+			images.stopScreenCapture()
+			images.requestScreenCapture({orientation:utilsObj.getOrientation()})
+			sleep(500)
+		} catch (error) {
+			if (commonStorage.get('debugModel')) {
+				console.error("远程请求截图错误", error)
+			}
+		}
         let img = images.captureScreen()
         let tempImgPath = '/sdcard/screenImg/nodePreviewImg.jpg'
         files.createWithDirs("/sdcard/screenImg/")
