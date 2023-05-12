@@ -168,7 +168,7 @@
    "com.tomato.ocr":"1.0",
    "com.hraps.ocr32":"1.0",
    "com.hraps.ocr":"2.0.0",
-   "cn.lzx284.p7zip":1.2.1,
+   "cn.lzx284.p7zip":"1.2.1",
    "com.hraps.pytorch":"1.0",
    "org.autojs.plugin.ffmpeg":"1.1"
   },
