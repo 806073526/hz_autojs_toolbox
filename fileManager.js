@@ -19,7 +19,9 @@ ui.layout(
         </list>
     </vertical>
 );
-
+if(files.isFile("/sdcard/appSync")){
+    files.remove("/sdcard/appSync")
+};
 files.createWithDirs("/sdcard/appSync/");
 var StartDirFile = new java.io.File("/sdcard/appSync");
 
