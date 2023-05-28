@@ -2110,10 +2110,21 @@ utilsObj.canvasRect = (x1, y1, x2, y2, type, msg) => {
             textPaint.setTextSize(30);
             textPaint.setStyle(Paint.Style.FILL);
             textPaint.setColor(colors.parseColor(rectColor));
-            //绘制一个方框
-            canvas.drawRect(Number(x1), Number(y1), Number(x2), Number(y2), paint);
-            //绘文字
-            canvas.drawText(msg, Number(x1), Number(y1), textPaint)
+            
+            // 竖屏时
+            if(utilsObj.getOrientation() === 1){
+                let canvasOffset = Number(commonStorage.get("canvasOffset") || 0)
+                //绘制一个方框 左上角的点 坐标偏移
+                canvas.drawRect(Number(x1), Number(y1) - canvasOffset, Number(x2), Number(y2) - canvasOffset, paint);
+                //绘文字
+                canvas.drawText(msg, Number(x1), Number(y1) - canvasOffset, textPaint)
+            } else {
+                 //绘制一个方框
+                canvas.drawRect(Number(x1), Number(y1), Number(x2), Number(y2), paint);
+                //绘文字
+                canvas.drawText(msg, Number(x1), Number(y1), textPaint)
+            }
+            
         })
         sleep(200 + Number(debugSleep))
         if (canvasFloat) {
@@ -3229,7 +3240,7 @@ utilsObj.regionalAnalysisChartPosition = (img, x1, y1, x2, y2, threshold, maxVal
     // 绘制方框
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【目标文字】" + matchingContent);
     // 根据内容获取匹配文字坐标
-    let matchingPosition = utilsObj.ocrGetPositionByContent(imgAfter, matchingContent, xy1["x"], xy1["y"], xy2["x"], xy2["x"])
+    let matchingPosition = utilsObj.ocrGetPositionByContent(imgAfter, matchingContent, xy1["x"], xy1["y"], xy2["x"], xy2["y"])
     // 绘制方框
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + matchingPosition.content);
 
@@ -3281,7 +3292,7 @@ utilsObj.regionalAnalysisChartPosition2 = (img, x1, y1, x2, y2, threshold, maxVa
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【目标文字】" + matchingContent);
 
     // 根据内容获取匹配文字坐标
-    let matchingPosition = utilsObj.ocrGetPositionByContent(imgAfter, matchingContent, xy1["x"], xy1["y"], xy2["x"], xy2["x"], openSplit)
+    let matchingPosition = utilsObj.ocrGetPositionByContent(imgAfter, matchingContent, xy1["x"], xy1["y"], xy2["x"], xy2["y"], openSplit)
 
     // 绘制方框
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + matchingPosition.content);
