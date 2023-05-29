@@ -696,6 +696,10 @@ utilsObj.executeServiceOperate = (pageName, operateSymbol, functionName, success
         case "regionalAnalysisChart2":
             result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg);
             break;
+        // 区域文字识别返回对象数组	
+        case "regionalAnalysisChart3":
+            result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg);
+            break;
         // 	区域文字识别获取坐标
         case "regionalAnalysisChartPosition2":
             result = utilsObj[functionName](img, x1, y1, x2, y2, threshold, maxVal, matchingContent, isOpenGray, isOpenThreshold, openSplit);
@@ -2933,6 +2937,46 @@ utilsObj.regionalAnalysisChart2 = (img, x1, y1, x2, y2, threshold, maxVal, isOpe
 
 
 /**
+ * 灰度化、阈值化区域识别文字2
+ * @desc 在大图的区域坐标范围内,进行灰度化阈值化处理后 再进行文字识别
+ * @param {Image} img 大图对象(一般为截全屏的图片对象)
+ * @param {int} x1 区域坐标x1 
+ * @param {int} y1 区域坐标y1
+ * @param {int} x2 区域坐标x2
+ * @param {int} y2 区域坐标y2
+ * @param {int} threshold 阈值化相似度
+ * @param {int} maxVal 阈值化最大值
+ * @param {boolean} isOpenGray 是否开启灰度化
+ * @param {boolean} isOpenThreshold 是否开启阈值化
+ * @param {String} canvasMsg 绘制消息
+ * @returns {Array} 文字识别结果对象数组
+ */
+ utilsObj.regionalAnalysisChart3 = (img, x1, y1, x2, y2, threshold, maxVal, isOpenGray, isOpenThreshold, canvasMsg) => {
+    // 坐标转换
+    let xy1 = utilsObj.convertXY(x1, y1, "leftTop")
+    let xy2 = utilsObj.convertXY(x2, y2, "rightBottom")
+
+    // 按照区域坐标裁剪大图
+    let clipImg = images.clip(img, xy1["x"], xy1["y"], xy2["x"] - xy1["x"], xy2["y"] - xy1["y"]);
+
+    // 绘制方框
+    utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【目标文字】" + canvasMsg);
+    // 灰度化、阈值化图片
+    let imgAfter = utilsObj.grayscaleAndThreshold2(clipImg, threshold, maxVal, isOpenGray, isOpenThreshold);
+    // 回收裁剪图片
+    utilsObj.recycleNull(clipImg);
+    // 获取文字识别结果对象数组
+    let objArr = utilsObj.ocrGetContentObjArr(imgAfter,xy1["x"], xy1["y"], xy2["x"], xy2["y"])
+    // 绘制方框
+    utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + (objArr||[]).map(item=> item.text).join(''));
+    // 回收灰度化、阈值化后的图片
+    utilsObj.recycleNull(imgAfter);
+    return objArr;
+}
+
+
+
+/**
  * 区域识别文字(原图)
  * @desc 在大图的区域坐标范围内进行文字识别
  * @param {Image} img 大图对象(一般为截全屏的图片对象)
@@ -3026,6 +3070,113 @@ utilsObj.ocrGetContentStr = (img) => {
                 console.info("")
             }
             return contentMlkArr.join('')
+        }
+    } catch (error) {
+        console.error("文字识别错误", error)
+    }
+    return '';
+}
+
+
+/**
+ * ocr获取文字识别内容对象数据结果
+ * @param {*} img 
+ */
+ utilsObj.ocrGetContentObjArr = (img, x1, y1, x2, y2) => {
+    let objArr = [];
+    try {
+        // 当前使用浩然ocr且已经初始化
+        if (curOcrName === "浩然" && hrOcr) {
+            let start = Date.now();
+            // 文字识别
+            let results = hrOcr.detect(img.getBitmap(), 1);
+            let end = Date.now()
+            // 控制台是否打印识别结果
+            if (commonStorage.get("debugModel")) {
+                console.info("【浩然OCR对象数组】")
+                console.info(results)
+                console.log(`【识别耗时:】 ${end - start}ms`);
+                console.info("")
+            }
+            results.forEach(item=>{
+                let frame = item.frame
+                let obj = {
+                    'text':item.text,
+                    'x':(frame[0] + (frame[4] - frame[0]) / 2),
+                    'y':(frame[1] + (frame[5] - frame[1]) / 2)
+                }
+                objArr.push(obj);
+            })
+            // 返回对象数组
+            return objArr
+            // 当前使用tomatoOcr且已经初始化
+        } else if (curOcrName === "tomato" && tomatoOcr) {
+            let start = Date.now();
+            // 文字识别
+            let results = tomatoOcr.ocrBitmap(img.getBitmap(), 2);
+            // 读取文字识别内容
+            let ocrArr = results ? JSON.parse(results) : []
+            // 返回文字识别内容结果
+            ocrArr.forEach(item=>{
+                // 计算匹配结果
+                let obj = {
+                    'text':item.words,
+                    'x': ((x2 - x1) / 2),
+                    'y': ((y2 - y1) / 2)
+                }
+                objArr.push(obj);
+            })
+            // 文字识别2
+            let results2 = tomatoOcr.ocrBitmap(img.getBitmap(), 3);
+            let end = Date.now()
+
+            // 读取文字识别内容
+            let ocrArr2 = results2 ? JSON.parse(results2) : []
+
+            // 控制台是否打印识图结果
+            if (commonStorage.get("debugModel")) {
+                // 读取文字识别内容
+                console.info("【TomatoOCR对象数组】")
+                console.info(ocrArr3)
+                console.log(`【识别耗时:】 ${end - start}ms`);
+                console.info("")
+            }
+            // 返回文字识别内容结果
+            ocrArr2.forEach(item=>{
+                // 计算匹配结果
+                let location = item.location
+                let obj = {
+                    'text':item.words,
+                    'x':(location[0][0] + (location[2][0] - location[0][0]) / 2),
+                    'y':(location[0][1] + (location[2][1] - location[0][1]) / 2)
+                }
+                objArr.push(obj);
+            })
+            return objArr;
+        } else if (curOcrName === "谷歌" && googleOcr) {
+            let start = Date.now();
+            let resultMlk = googleOcr.detect(img);
+            let end = Date.now()
+            // 控制台是否打印识图结果
+            if (commonStorage.get("debugModel")) {
+                // 读取文字识别内容
+                console.info("【谷歌OCR对象数组】：")
+                console.info(resultMlk)
+                console.log(`【识别耗时:】 ${end - start}ms`);
+                console.info("")
+            }
+             // 返回文字识别内容结果
+             resultMlk.forEach(item=>{
+                // 计算匹配结果
+                let bounds = item.bounds
+                let obj = {
+                    'text':item.text,
+                    'x': (bounds.left + (bounds.right - bounds.left) / 2),
+                    'y': (bounds.top + (bounds.bottom - bounds.top) / 2)
+                }
+                objArr.push(obj);
+            })
+            return objArr;
         }
     } catch (error) {
         console.error("文字识别错误", error)
