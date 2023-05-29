@@ -2937,7 +2937,7 @@ utilsObj.regionalAnalysisChart2 = (img, x1, y1, x2, y2, threshold, maxVal, isOpe
 
 
 /**
- * 灰度化、阈值化区域识别文字2
+ * 灰度化、阈值化区域识别文字3
  * @desc 在大图的区域坐标范围内,进行灰度化阈值化处理后 再进行文字识别
  * @param {Image} img 大图对象(一般为截全屏的图片对象)
  * @param {int} x1 区域坐标x1 
@@ -2967,6 +2967,12 @@ utilsObj.regionalAnalysisChart2 = (img, x1, y1, x2, y2, threshold, maxVal, isOpe
     utilsObj.recycleNull(clipImg);
     // 获取文字识别结果对象数组
     let objArr = utilsObj.ocrGetContentObjArr(imgAfter,xy1["x"], xy1["y"], xy2["x"], xy2["y"])
+	if(objArr && objArr.length){
+		objArr.forEach(item=>{
+			item.x = Number(xy1["x"]) + Number(item.x)
+			item.y = Number(xy1["y"]) + Number(item.y)
+		})
+	}
     // 绘制方框
     utilsObj.canvasRect(xy1["x"], xy1["y"], xy2["x"], xy2["y"], "chart", "【文字识别结果】" + (objArr||[]).map(item=> item.text).join(''));
     // 回收灰度化、阈值化后的图片
