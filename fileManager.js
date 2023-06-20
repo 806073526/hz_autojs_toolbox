@@ -1,6 +1,6 @@
 "ui";
 ui.layout(
-    <vertical>
+    `<vertical>
         <appbar>
             <toolbar id="toolbar" title="脚本管理" />
         </appbar>
@@ -17,7 +17,7 @@ ui.layout(
                 </horizontal>
             </card>
         </list>
-    </vertical>
+    </vertical>`
 );
 if(files.isFile("/sdcard/appSync")){
     files.remove("/sdcard/appSync")

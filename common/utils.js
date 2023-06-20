@@ -2089,10 +2089,10 @@ utilsObj.canvasRect = (x1, y1, x2, y2, type, msg) => {
             canvasFloat.close();
         }
         canvasFloat = floaty.rawWindow(
-            <relative>
+            `<relative>
                 <button id="boardClose" alpha="0" h="*" w="*" layout_centerInParent="true" />
                 <canvas id="board" w="*" h="*" layout_centerInParent="true"></canvas>
-            </relative>
+            </relative>`
         );
         // canvasFloat.setTouchable(false);
         canvasFloat.boardClose.on("click", () => {

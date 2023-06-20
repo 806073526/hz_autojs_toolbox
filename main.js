@@ -1,6 +1,6 @@
 "ui";
 ui.layout(
-    <drawer id="drawer">
+    `<drawer id="drawer">
         <vertical>
             <appbar>
                 <toolbar id="toolbar" title="华仔AutoJs工具箱" />
@@ -78,7 +78,7 @@ ui.layout(
                 </frame>
             </viewpager>
         </vertical>
-    </drawer>
+    </drawer>`
 );
 
 
@@ -117,7 +117,7 @@ ui["当前版本号"].attr("text", curVersionName + (hotUpdateVersion ? `[${hotU
 function initUiSetting() {
     // 初始化公共ui设置 
     ui.inflate(
-        <card marginBottom="40px" contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px">
+        `<card marginBottom="40px" contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px">
             <vertical>
                 <text text="公共参数设置:" textSize="22sp" textColor="#210303" marginBottom="5px" />
                 <horizontal h="80px">
@@ -187,7 +187,7 @@ function initUiSetting() {
                     <input id="y偏移系数" inputType="number" hint="请输入y偏移系数0-100" textSize="16sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
             </vertical>
-        </card>,
+        </card>`,
         ui.uiView,
         true
     )

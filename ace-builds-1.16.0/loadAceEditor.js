@@ -1,10 +1,10 @@
 "ui";
 ui.layout(
-    <vertical>
+    `<vertical>
         <vertical h="*" w="*">
             <webview id="webView" layout_below="title" w="*" h="*" />
         </vertical>
-    </vertical>
+    </vertical>`
 );
 
 function callJavaScript(webViewWidget, script, callback) {
