@@ -26,9 +26,9 @@ events.broadcast.on("startPreviewDevice", (params) => {
 	device.wakeUpIfNeeded();
     if (params) {
         // 解密后字符串
-        let decodeAftrJson = $base64.decode(params)
+        let decodeAfterJson = $base64.decode(params)
         // json字符串转换js对象
-        let operateObj = JSON.parse(decodeAftrJson)
+        let operateObj = JSON.parse(decodeAfterJson)
 
         deviceParam.imgQuality = operateObj.imgQuality || 100
         deviceParam.imgScale = operateObj.imgScale || 1
@@ -50,6 +50,7 @@ events.broadcast.on("startPreviewDevice", (params) => {
         // 创建预览目录
         files.createWithDirs("/sdcard/screenImg/")
         sleep(500)
+        let lastImageBase = "";
         toastLog("开始预览")
         while (true) {
             try {
@@ -68,10 +69,25 @@ events.broadcast.on("startPreviewDevice", (params) => {
                 let tempImgPath = '/sdcard/screenImg/tempImg.jpg'
                 // 临时图片路径
                 files.remove(tempImgPath)
+
+                let curImageBase = images.toBase64(afterImg, "jpg", deviceParam.imgQuality);
                 sleep(10)
+                if(curImageBase !== lastImageBase){
+                    http.request(commonStorage.get("服务端IP") + ':' + (commonStorage.get("服务端Port") || 9998)  +'/attachmentInfo/updateFileMap', {
+                        headers: {
+                            "deviceUUID": commonStorage.get('deviceUUID')
+                        },
+                        method: 'POST',
+                        contentType: 'application/json',
+                        body: JSON.stringify({ 'dirPathKey': commonStorage.get('deviceUUID') + '_' + tempImgPath, 'fileJson': curImageBase })
+                    }, (e) => { 
+                        lastImageBase = curImageBase;
+                    });
+                }
+                /* sleep(10)
                 images.save(afterImg, tempImgPath, "jpg", deviceParam.imgQuality);
                 utils.uploadFileToServer(tempImgPath, deviceUUID + '/tempImg.jpg', (a) => {
-                })
+                }) */
                 afterImg.recycle()
                 img.recycle()
                 sleep(deviceParam.appSpace) 
