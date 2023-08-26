@@ -3,16 +3,16 @@ importClass("android.provider.Settings");
 let myPackageName = context.getPackageName();
 let obj = {}
 let utils = require('./common/utils.js')
-obj.init = function () {
+obj.init = function() {
     refreshState();
     //可以在回到界面时，刷新开关状态
-    ui.emitter.on("resume", function () {
+    ui.emitter.on("resume", function() {
         refreshState();
     });
-    ui.autoService.on("check", function (checked) {
+    ui.autoService.on("check", function(checked) {
         setAutoService(checked);
     });
-    ui.floatyPermission.on("check", function (checked, view) {
+    ui.floatyPermission.on("check", function(checked, view) {
         //这里演示下使用startActivityForResult
         if (checked) {
             //当开启开关时，这里建议设计成检查权限并在回调中判断权限，打开自己设计的悬浮窗
@@ -49,50 +49,56 @@ obj.init = function () {
             }
         }
     });
-    ui.foregroundService.on("check", function (checked) {
+    ui.foregroundService.on("check", function(checked) {
         //这个很简单，没啥讲的
         $settings.setEnabled("foreground_service", checked);
     });
-    ui.stableMode.on("check", function (checked) {
+    /* ui.stableMode.on("check", function (checked) {
         //这个设置后需要重启下无障碍
         $settings.setEnabled("stable_mode", checked);
         toast("需重新打开无障碍");
         ui.autoService.setChecked(false);
-    });
-    ui.screenCapturePermission.on("check", function (checked) {
-        //截图权限的申请是阻塞的，需要新启动线程
-        threads.start(function () {
-            try {
-                if (checked) {
-                    images.requestScreenCapture({orientation:utils.getOrientation()});
-                } else {
-                    $images.stopScreenCapture();
-                }
-            } catch (error) {
-
-            }
-        });
-    });
-  /*   ui.usageStatsPermission.on("check", function (checked) {
-        if (checked) {
-            if (!checkSystemService("usage_stats")) {
-                app.startActivity({
-                    action: "android.settings.USAGE_ACCESS_SETTINGS",
-                });
-            }
-        } else {
-            toastLog("需手动关闭");
-            ui.usageStatsPermission.setChecked(true);
-        }
     }); */
-    ui.backgroundOpenPermission.on("check", function (checked) {
-        toastLog("miui等第三方操作系统需要手动设置");
+    /*  ui.screenCapturePermission.on("check", function (checked) {
+         //截图权限的申请是阻塞的，需要新启动线程
+         threads.start(function () {
+             try {
+                 if (checked) {
+                     images.requestScreenCapture({orientation:utils.getOrientation()});
+                 } else {
+                     $images.stopScreenCapture();
+                 }
+             } catch (error) {
+
+             }
+         });
+     }); */
+    /*   ui.usageStatsPermission.on("check", function (checked) {
+          if (checked) {
+              if (!checkSystemService("usage_stats")) {
+                  app.startActivity({
+                      action: "android.settings.USAGE_ACCESS_SETTINGS",
+                  });
+              }
+          } else {
+              toastLog("需手动关闭");
+              ui.usageStatsPermission.setChecked(true);
+          }
+      }); */
+    ui.backgroundOpenPermission.on("check", function(checked) {
         if (checked) {
-            toastLog("请打开后台弹出权限");
+            toastLog("手动设置成功即可,开关仅用于跳转设置页面");
             app.openAppSetting(myPackageName);
-        } else {
-            toastLog("需手动关闭");
-            ui.backgroundOpenPermission.setChecked(true);
+            ui.backgroundOpenPermission.checked = false;
+        }
+    });
+
+
+    ui.battery.on("check", function(checked) {
+        if (checked) {
+            toastLog("手动设置成功即可,开关仅用于跳转设置页面");
+            app.openAppSetting(myPackageName);
+            ui.battery.checked = false;
         }
     });
 
@@ -101,11 +107,13 @@ obj.init = function () {
         ui.autoService.checked = auto.service != null;
         ui.floatyPermission.checked = floaty.checkPermission();
         ui.foregroundService.checked = $settings.isEnabled("foreground_service");
-        ui.stableMode.checked = $settings.isEnabled("stable_mode");
-        ui.screenCapturePermission.checked = !!$images.getScreenCaptureOptions();
+        // ui.stableMode.checked = $settings.isEnabled("stable_mode");
+        // ui.screenCapturePermission.checked = !!$images.getScreenCaptureOptions();
         // ui.usageStatsPermission.checked = checkSystemService("usage_stats");
         // ui.backgroundOpenPermission.checked = checkMiuiPermission(10021);
+        // ui.ignoreBatteryOptimizations = $power_manager.isIgnoringBatteryOptimizations();
     }
+
     function setAutoService(checked) {
         if (checked) {
             if (checkPermission("android.permission.WRITE_SECURE_SETTINGS")) {
@@ -137,6 +145,7 @@ obj.init = function () {
             auto.service.disableSelf();
         }
     }
+
     function openAccessibility() {
         let mServices = ":" + myPackageName + "/com.stardust.autojs.core.accessibility.AccessibilityService";
         let enabledServices = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
@@ -149,12 +158,14 @@ obj.init = function () {
         pm = context.getPackageManager();
         return PackageManager.PERMISSION_GRANTED == pm.checkPermission(permission, context.getPackageName().toString());
     }
+
     function checkSystemService(service) {
         importClass(android.app.AppOpsManager);
         appOps = context.getSystemService(context.APP_OPS_SERVICE);
         mode = appOps.checkOpNoThrow("android:get_" + service, android.os.Process.myUid(), context.getPackageName());
         return (granted = mode == AppOpsManager.MODE_ALLOWED);
     }
+
     function checkMiuiPermission(flag) {
         //flag为10021是后台弹出界面,为10016是NFC权限
         importClass(android.app.AppOpsManager);
@@ -175,4 +186,3 @@ obj.init = function () {
     }
 }
 module.exports = obj
-

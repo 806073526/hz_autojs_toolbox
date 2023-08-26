@@ -129,6 +129,9 @@ function loadFile(params) {
     path = aceEditorStorage.get("filePath");
 
     let content = files.read(path);
+    if(!content){
+        return " ";
+    }
     return content;
 }
 
@@ -171,6 +174,7 @@ function execJSCallback(val) {
                     } catch (e) {
                         console.trace(e)
                     }
+                    events.broadcast.emit("refreshPage", '');
                     ui.finish();
                 }).on("negative", (action, dialog) => {
                     ui.finish();

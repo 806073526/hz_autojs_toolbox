@@ -1150,24 +1150,15 @@ utilsObj.remoteHandler = (message) => {
         if (['remoteClipGrayscaleAndThresholdToServer', 'remoteClipGrayscaleAndThresholdAnalysisChartToServer'].includes(functionName)) {
             // 唤醒设备
 			device.wakeUpIfNeeded();
-			try {
-                images.stopScreenCapture()
-                images.requestScreenCapture({orientation:utilsObj.getOrientation()})
-                sleep(500)
-            } catch (error) {
-                if (commonStorage.get('debugModel')) {
-                    console.error("远程请求截图错误", error)
-                }
-            }
-            setTimeout(() => {
-                if (commonStorage.get('debugModel')) {
-                    console.log("主程序刷新截图权限")
-                }
-                events.broadcast.emit("refreshScreenCapture", "");
-            }, 3000)
+             // 申请 截图权限
+            utilsObj.requestScreenCaptureCommonFun(()=>{
+                // 调用方法
+                utilsObj[functionName].apply(utilsObj, functionParam)
+            })
+        } else {
+            // 调用方法
+            utilsObj[functionName].apply(utilsObj, functionParam)
         }
-        // 调用方法
-        utilsObj[functionName].apply(utilsObj, functionParam)
     })
 }
 
@@ -4085,18 +4076,10 @@ utilsObj.remoteUploadRootNodeJsonToServer = () => {
  * 上传节点预览图片
  */
 utilsObj.uploadNodePreviewImg = () => {
-    try {
-		// 唤醒设备
-		device.wakeUpIfNeeded();
-		try {
-			images.stopScreenCapture()
-			images.requestScreenCapture({orientation:utilsObj.getOrientation()})
-			sleep(500)
-		} catch (error) {
-			if (commonStorage.get('debugModel')) {
-				console.error("远程请求截图错误", error)
-			}
-		}
+	// 唤醒设备
+    device.wakeUpIfNeeded();
+    // 申请 截图权限
+    utilsObj.requestScreenCaptureCommonFun(()=>{
         let img = images.captureScreen()
         let tempImgPath = '/sdcard/screenImg/nodePreviewImg.jpg'
         files.createWithDirs("/sdcard/screenImg/")
@@ -4107,8 +4090,92 @@ utilsObj.uploadNodePreviewImg = () => {
         utilsObj.uploadFileToServer(tempImgPath, deviceUUID + '/nodePreviewImg.jpg', (a) => {
         })
         img.recycle()
+    })
+}
+
+
+/**
+ * 申请截图权限公共方法
+ */
+utilsObj.requestScreenCaptureCommonFun = (callback)=>{
+    try {
+        // 获取截图权限参数
+        let screenCaptureOptions = images.getScreenCaptureOptions();
+        // 不为空
+        if(screenCaptureOptions){
+            if(callback){
+                callback();
+            }
+            // 已有截图权限 直接返回
+            return;
+        }
+        // 未开启无障碍服务
+        if(!auto.service){
+            console.error("未开启无障碍服务")
+            // 直接返回
+            return;
+        }
+
+        // 是否存在截图权限
+        let exitsScreenCaputreOptions = false;
+
+        // 读取其他点击文字数据
+        let otherClickText = commonStorage.get("otherClickText");
+
+        let textRegExp = new RegExp(`(允许|立即开始|同意${otherClickText ? '|'+otherClickText : ''})`)
+
+        // 停止截图点击线程
+        if(utilsObj.requestScreenClickThread){
+            utilsObj.requestScreenClickThread.interrupt();
+        }
+
+        // 开启点击线程
+        utilsObj.requestScreenClickThread = threads.start(function () {
+            while (true) {
+                let click1 = textMatches(textRegExp).findOne(100);
+                if(click1){
+                    click1.click();
+                }
+                let checkScreenCaptureOptions = images.getScreenCaptureOptions();
+                if(checkScreenCaptureOptions){
+                    // 设置标志
+                    exitsScreenCaputreOptions = true;
+                    if(utilsObj.requestScreenClickThread){
+                        // 停止点击线程
+                        utilsObj.requestScreenClickThread.interrupt();
+                    }
+                }
+            }
+        });
+        // 申请截图权限
+        images.requestScreenCapture({orientation:utilsObj.getOrientation()});
+
+        let timeoutLimit = 0;
+        // 没有截图权限时 循环等待
+        while (!exitsScreenCaputreOptions) {
+            sleep(100);
+            timeoutLimit++;
+            // 超过30秒 退出等待
+            if(timeoutLimit> 10 * 30){
+                break;
+            }
+        }
+        if(timeoutLimit < 10 * 30){
+            // 未超时 执行回调
+            if(callback){
+                sleep(1000);
+                callback();
+            }
+        }
+        // 超时不做处理
     } catch (error) {
-        console.error("预览节点图片错误", error)
+        if (commonStorage.get('debugModel')) {
+            console.error("申请截图权限错误", error)
+        }
+        // 如果出现错误 则先停止截图权限
+        images.stopScreenCapture()
+        // 再重新申请截图权限
+        images.requestScreenCapture({orientation:utilsObj.getOrientation()});
     }
 }
 

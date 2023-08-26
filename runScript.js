@@ -38,40 +38,16 @@ events.broadcast.on("startPreviewDevice", (params) => {
         deviceParam.imgThreshold = operateObj.imgThreshold || 60
         deviceParam.appSpace = operateObj.appSpace || 500
     }
-    if(clickThread){
-        console.log("关闭自动点击线程")
-        clickThread.interrupt()
-    }
 
     if(deviceThread){
         console.log("关闭预览线程")
         deviceThread.interrupt()
     }
-    console.log("开启自动点击线程")
     
-    clickThread = threads.start(function () {
-        while (true) {
-            let click1 = text("立即开始").findOne(100);
-            if(click1){
-                click1.click()
-            }
-            let otherClickText = commonStorage.get("otherClickText")
-            if(otherClickText){
-              let click2 = text(otherClickText).findOne(100);
-               if(click2){
-                 click2.click()
-             }
-            }
-        }
-    });
     deviceThread = threads.start(() => {
-        try {
-            console.log("重开权限")
-            images.stopScreenCapture()
-            images.requestScreenCapture({orientation:utils.getOrientation()})
-        } catch (error) {
-            console.error("重开截图权限错误",error)
-        }
+        // 申请 截图权限
+        utils.requestScreenCaptureCommonFun();
+        // 创建预览目录
         files.createWithDirs("/sdcard/screenImg/")
         sleep(500)
         toastLog("开始预览")
@@ -103,8 +79,7 @@ events.broadcast.on("startPreviewDevice", (params) => {
                 console.error("预览错误",error)
                 try {
                     console.log("重开权限")
-                    images.stopScreenCapture()
-                    images.requestScreenCapture({orientation:utils.getOrientation()})
+                    utils.requestScreenCaptureCommonFun();
                 } catch (error1) {
                     console.error("重开截图权限错误",error1)
                 }
@@ -122,28 +97,5 @@ events.broadcast.on("stopPreviewDevice", function () {
         deviceThread.interrupt()
     }
 });
-// 点击立即开始
-threads.start(function () {
-    while (true) {
-        let click1 = text("立即开始").findOne(100);
-        if(click1){
-            click1.click()
-        }
-        let otherClickText = commonStorage.get("otherClickText")
-        if(otherClickText){
-           let click2 = text(otherClickText).findOne(100);
-           if(click2){
-             click2.click()
-           }
-        }
-    }
-});
-sleep(1000)
-try {
-    images.stopScreenCapture()
-    images.requestScreenCapture({orientation:utils.getOrientation()})
-} catch (error) {
-        console.error("主程序请求截图错误", error)
-}
 //保持脚本运行
 setInterval(() => { }, 1000);
