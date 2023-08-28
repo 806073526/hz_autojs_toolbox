@@ -26,6 +26,10 @@ ui.layout(
     </frame>
 );
 
+
+let runScriptArr = [];
+
+
 let fileManageStorage = storages.create("fileManageStorage");
 let defaultPath = fileManageStorage.get("defaultPath") || "/sdcard/appSync/";
 if (!defaultPath.endsWith("/")) {
@@ -224,7 +228,7 @@ ui.list.on("item_click", function(item, i, itemView, listView) {
         CurrentDirFile = file;
         updateFileData(CurrentDirFile);
     } else if (file.isFile()) {
-        const scriptFileExtensions = [".js", ".json", ".html", ".htm", ".xml", ".md", ".css", ".txt", ".sh", ".vue"];
+        const scriptFileExtensions = [".js", ".json", ".html", ".htm", ".xml", ".md", ".css", ".txt", ".sh", ".vue", "mjs"];
         const lastDotIndex = file.name.lastIndexOf(".");
         const fileExtension = file.name.slice(lastDotIndex);
         if (scriptFileExtensions.includes(fileExtension)) {
@@ -313,16 +317,21 @@ function toBack() {
 };
 
 function isScriptFile(file) {
-    return file.isFile() && file.name.endsWith(".js")
+    return file.isFile() && (file.name.endsWith(".js") || file.name.endsWith(".mjs"))
 }
+
+
+
 
 function execScriptFile(scriptFile) {
     let scriptFileStr = scriptFile.toString();
     let offset = scriptFileStr.lastIndexOf("/");
     let scriptFileDir = scriptFileStr.slice(0, offset + 1);
     toastLog("运行" + scriptFileStr + "成功")
-    engines.execScriptFile(scriptFileStr, {
+    engines.startFloatingController(scriptFileStr, {
         path: [scriptFileDir]
+    }, {
+        runImmediately: true
     })
 }
 
