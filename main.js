@@ -1,6 +1,6 @@
 "ui";
 ui.layout(
-    <drawer id="drawer">
+    `<drawer id="drawer">
         <vertical>
             <appbar>
                 <toolbar id="toolbar" title="华仔AutoJs工具箱" />
@@ -42,7 +42,7 @@ ui.layout(
                                         <text text="权限设置:" textSize="22sp" textColor="#210303" marginBottom="5px" />
                                         <Switch h="20"  textSize="14sp" text="无障碍服务" id="autoService" checked="true" />
                                         <horizontal>
-                                            <text textSize="12sp" text="必要权限(可通过adb或者root实现保活)"/>
+                                            <text textSize="12sp" text="必要权限(开启adb或者root后可无障碍保活)"/>
                                         </horizontal>
                                         
                                         <Switch h="20" textSize="14sp" text="悬浮窗" id="floatyPermission" checked="true" marginTop="5px"/>
@@ -111,7 +111,7 @@ ui.layout(
                 </frame>
             </viewpager>
         </vertical>
-    </drawer>
+    </drawer>`
 );
 
 
@@ -228,7 +228,7 @@ function initUiSetting() {
 
     // 初始化公共ui设置 
     ui.inflate(
-        <card contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px" marginTop="30px" marginBottom="20px">
+        `<card contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px" marginTop="30px" marginBottom="20px">
             <vertical layout_gravity="center" bg="#ffffff">
                 <text text="参数说明:" textSize="22sp" textColor="#210303" marginBottom="5px" />
                 <horizontal>
@@ -280,7 +280,7 @@ function initUiSetting() {
                     <text textSize="14sp" text="14、y偏移系数,服务端进行多分辨率测试时需要用到,一般无需修改。"/>
                 </horizontal>
             </vertical>
-        </card>,
+        </card>`,
         ui.uiView,
         true
     )
