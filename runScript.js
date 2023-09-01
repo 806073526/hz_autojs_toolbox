@@ -54,6 +54,19 @@ events.broadcast.on("startPreviewDevice", (params) => {
         toastLog("开始预览")
         while (true) {
             try {
+                // 获取截图权限参数
+                let screenCaptureOptions = images.getScreenCaptureOptions();
+                // 不为空
+                if(screenCaptureOptions){
+                    // 截图权限与当前屏幕方向不同 
+                    if(String(screenCaptureOptions.orientation) !== String(utils.getOrientation())){
+                        // 关闭当前截图权限 
+                        images.stopScreenCapture();
+                        // 重新申请截图权限
+                        utils.requestScreenCaptureCommonFun();
+                    }
+                }
+
                 let img = images.captureScreen()
                 let afterImg = images.scale(img, deviceParam.imgScale, deviceParam.imgScale)
                  if (deviceParam.isOpenGray === 1) {
