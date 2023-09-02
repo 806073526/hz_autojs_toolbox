@@ -57,12 +57,12 @@ ui.layout(
                                         
                                         <Switch h="20" textSize="14sp" text="后台运行权限" id="backgroundOpenPermission" marginTop="5px" checked="false"/>
                                         <horizontal>
-                                            <text textSize="12sp" text="必要权限(权限管理-后台运行权限,请手动设置)"/>
+                                            <text textSize="12sp" text="必要权限(权限管理-后台运行权限,建议手动设置)"/>
                                         </horizontal>
                                         
                                         <Switch h="20" textSize="14sp" text="忽略电池优化" id="battery" marginTop="5px" checked="false"/>
                                         <horizontal>
-                                            <text textSize="12sp" text="必要权限(省电策略-无限制,请手动设置)"/>
+                                            <text textSize="12sp" text="必要权限(省电策略-无限制)"/>
                                         </horizontal>
                                     </vertical>
                                 </card>

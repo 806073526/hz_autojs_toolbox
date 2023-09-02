@@ -86,8 +86,15 @@ obj.init = function() {
           }
       }); */
     ui.backgroundOpenPermission.on("check", function(checked) {
-        if (checked) {
-            toastLog("手动设置成功即可,开关仅用于跳转设置页面");
+        try {
+            var intent = new Intent("miui.intent.action.APP_PERM_EDITOR");
+            intent.putExtra("extra_pkgname", context.getPackageName());
+            let componentName = new android.content.ComponentName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity");
+            intent.setComponent(componentName);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (e) {
+            toastLog("若未跳转成功,请手动设置");
             app.openAppSetting(myPackageName);
             ui.backgroundOpenPermission.checked = false;
         }
@@ -95,11 +102,10 @@ obj.init = function() {
 
 
     ui.battery.on("check", function(checked) {
-        if (checked) {
-            toastLog("手动设置成功即可,开关仅用于跳转设置页面");
-            app.openAppSetting(myPackageName);
-            ui.battery.checked = false;
-        }
+        let intent = new Intent();
+        intent.setAction("android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS")
+        intent.putExtra("extra_pkgname", context.getPackageName());
+        app.startActivity(intent);
     });
 
 
@@ -111,7 +117,19 @@ obj.init = function() {
         // ui.screenCapturePermission.checked = !!$images.getScreenCaptureOptions();
         // ui.usageStatsPermission.checked = checkSystemService("usage_stats");
         // ui.backgroundOpenPermission.checked = checkMiuiPermission(10021);
-        // ui.ignoreBatteryOptimizations = $power_manager.isIgnoringBatteryOptimizations();
+        try {
+            ui.backgroundOpenPermission.checked = checkMiuiPermission(10021);
+        } catch (e) {
+            toastLog("当前系统无法读取后台运行权限,请保证在系统设置中开启即可");
+            ui.backgroundOpenPermission.checked = false;
+        }
+        try {
+            let pm = context.getSystemService(context.POWER_SERVICE);
+            ui.battery.checked = pm.isIgnoringBatteryOptimizations(context.getPackageName());
+        } catch (e) {
+            toastLog("当前系统无法读取是否忽略省电策略,请在系统设置中设置即可");
+            ui.battery.checked = false;
+        }
     }
 
     function setAutoService(checked) {
@@ -168,9 +186,9 @@ obj.init = function() {
 
     function checkMiuiPermission(flag) {
         //flag为10021是后台弹出界面,为10016是NFC权限
-        importClass(android.app.AppOpsManager);
-        let appOps = context.getSystemService(context.APP_OPS_SERVICE);
         try {
+            importClass(android.app.AppOpsManager);
+            let appOps = context.getSystemService(context.APP_OPS_SERVICE);
             let myClass = util.java.array("java.lang.Class", 3);
             myClass[0] = java.lang.Integer.TYPE;
             myClass[1] = java.lang.Integer.TYPE;
