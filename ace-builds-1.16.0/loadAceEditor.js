@@ -350,6 +350,9 @@ ui.bar.on("item_click", function(item, i, itemView, listView) {
         case '语法':
             callJavaScript(ui.webView, 'editor.prompt({ $type: "modes" });', null);
             break;
+		case '文档':
+			app.openUrl("https://www.wuyunai.com/docs/");		
+			break;
         case '主题':
             aceEditorStorage = storages.create("aceEditor");
             var arr = []
