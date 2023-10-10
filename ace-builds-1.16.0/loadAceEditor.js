@@ -6,7 +6,10 @@ ui.layout(
     `<frame>
         <vertical>
             <appbar bg="#1a1c1a" >
-                <grid  spanCount="8" id="bar">
+                <HorizontalScrollView id="breadcrumbView" w="*"  h="25" padding="8 2 5 2" orientation="horizontal">
+                    <text id="fileName" text="文件名称" textSize="14" textColor="#FFFFFF" gravity="left|center" />
+                </HorizontalScrollView>
+                <grid  spanCount="9" id="bar">
                     <vertical h="40" w="40" gravity="center|bottom">
                         <img tint="#FFFFFF" h="18" w="18"  src="@drawable/{{this.src}}" />
                         <text textSize="12" textColor="#FFFFFF" gravity="center|bottom" text="{{this.title}}"/>
@@ -286,17 +289,24 @@ ui.webView.getSettings().setJavaScriptEnabled(true);
 ui.webView.loadUrl("file://" + filePath);
 
 
+let aceEditorStorage = storages.create("aceEditor");
+let fileName = aceEditorStorage.get("filePath");
+ui.fileName.setText(fileName);
+
 menus = [{
+        title: '文档',
+        src: 'ic_library_books_black_48dp'
+    },
+    {
+        title: '主题',
+        src: 'ic_brightness_medium_black_48dp'
+    }, {
         title: '命令',
         src: 'ic_widgets_black_48dp'
     },
     {
         title: '语法',
         src: 'ic_font_download_black_48dp'
-    },
-    {
-        title: '主题',
-        src: 'ic_brightness_medium_black_48dp'
     },
     {
         title: '日志',
@@ -416,8 +426,8 @@ ui.bar.on("item_click", function(item, i, itemView, listView) {
 
 });
 let actionLeftBar = [{
-    title: 'ESC',
-    onclick: 'editor.exitMultiSelectMode();'
+    title: '格式化',
+    onclick: ''
 }, {
     title: '↑',
     onclick: 'editor.navigateUp(1);'
@@ -425,8 +435,8 @@ let actionLeftBar = [{
     title: 'TAB',
     onclick: 'editor.indent();'
 }, {
-    title: '文档',
-    onclick: ''
+    title: '退格',
+    onclick: 'editor.remove("left");'
 }, {
     title: '←',
     onclick: 'editor.navigateLeft(1)'
@@ -437,8 +447,8 @@ let actionLeftBar = [{
     title: '→',
     onclick: 'editor.navigateRight(1);'
 }, {
-    title: '格式化',
-    onclick: ''
+    title: '删除',
+    onclick: 'editor.remove("right");'
 }];
 ui.actionLeftBar.setDataSource(actionLeftBar);
 ui.actionLeftBar.on("item_click", function(item, i, itemView, listView) {
@@ -465,12 +475,18 @@ ui.actionLeftBar.on("item_click", function(item, i, itemView, listView) {
     callJavaScript(ui.webView, script, null);
 });
 
-/*ui.actionLeftBar.on("item_long_click", function(e, item, i, itemView, listView) {
+ui.actionLeftBar.on("item_long_click", function(e, item, i, itemView, listView) {
     if (item.title == "TAB") {
-        
+        let script = `var selection = editor.getSelection();
+            if (!selection.isEmpty() && "${item.insertText}" == "/") {
+                editor.toggleCommentLines();
+            } else {
+                editor.insert(${JSON.stringify(item.insertText)});
+            }`
+        callJavaScript(ui.webView, `togglecomment(${JSON.stringify(item.insertText)});`, null);
     }
     e.consumed = true;
-});*/
+});
 
 
 let symbols = JSON.parse(files.read("symbols.json"));
