@@ -1,10 +1,34 @@
 "ui";
+importClass(com.google.android.material.bottomsheet.BottomSheetDialog);
+importClass(com.google.android.material.bottomsheet.BottomSheetBehavior);
+//$ui.useAndroidResources();
 ui.layout(
-    `<vertical>
-        <vertical h="*" w="*">
-            <webview id="webView" layout_below="title" w="*" h="*" />
+    `<frame>
+        <vertical>
+            <appbar bg="#1a1c1a" >
+                <grid  spanCount="8" id="bar">
+                    <vertical h="40" w="40" gravity="center|bottom">
+                        <img tint="#FFFFFF" h="18" w="18"  src="@drawable/{{this.src}}" />
+                        <text textSize="12" textColor="#FFFFFF" gravity="center|bottom" text="{{this.title}}"/>
+                    </vertical>
+                </grid>
+            </appbar>
+            <webview layout_weight="1" id="webView" layout_below="title" h="*" w="*" />
+            
+            <horizontal w="*">
+                <grid padding="8 0 5 8" layout_gravity="bottom"  bg="#1a1c1a" id="actionLeftBar" h="80" spanCount="4">
+                    <vertical>
+                        <text margin="2 5 2 10" layout_weight="1" gravity="center" textColor="#c1c9bf" text="{{this.title}}"/>
+                    </vertical>
+                </grid>
+                <grid layout_weight="1" padding="5 0 0 8"  layout_gravity="bottom"  bg="#1a1c1a" id="actionBar" h="80" spanCount="6">
+                    <vertical>
+                        <text id="symbol" padding="5 5 5 10" layout_weight="1" gravity="center" textColor="#c1c9bf" text="{{this.hint}}"/>
+                    </vertical>
+                </grid>
+            </horizontal>
         </vertical>
-    </vertical>`
+    </frame>`
 );
 
 function callJavaScript(webViewWidget, script, callback) {
@@ -34,7 +58,7 @@ function AutoX() {
             document.body.append(bridgeFrame);
         }
         return bridgeFrame;
-    };
+    }
     const h5Callbackers = {};
     let h5CallbackIndex = 1;
     let setCallback = (callback) => {
@@ -50,7 +74,7 @@ function AutoX() {
             delete h5Callbackers[callId];
         }
         return callback;
-    };
+    }
 
     function invoke(cmd, params, callback) {
         let callId = null;
@@ -65,7 +89,7 @@ function AutoX() {
             }
             console.trace(e);
         }
-    };
+    }
     let callback = (data) => {
         let callId = data.callId;
         let params = data.params;
@@ -73,7 +97,7 @@ function AutoX() {
         if (callbackFun && callbackFun.callback) {
             return callbackFun.callback(params);
         }
-    };
+    }
 
     const aceEditor = {};
     aceEditor.init = () => {
@@ -86,33 +110,33 @@ function AutoX() {
         editor.setValue(value);
         editor.selection.clearSelection();
         editor.session.getUndoManager().reset();
-    };
+    }
 
     aceEditor.getValue = () => {
         let editor = ace.edit('editor');
         return editor.getValue();
-    };
+    }
 
     aceEditor.listenTextChanged = () => {
         let editor = ace.edit('editor');
 
-        editor.on('change', function () {
+        editor.on('change', function() {
             //console.log("Text changed!");
             editor.isTextChanged = true;
         });
-    };
+    }
 
     aceEditor.isTextChanged = () => {
         let editor = ace.edit('editor');
         return editor.isTextChanged;
-    };
+    }
 
     return {
         invoke: invoke,
         callback: callback,
         aceEditor: aceEditor
-    };
-};
+    }
+}
 
 function bridgeHandler_handle(cmd, params) {
     //console.log('bridgeHandler处理 cmd=%s, params=%s', cmd, JSON.stringify(params));
@@ -129,7 +153,7 @@ function loadFile(params) {
     path = aceEditorStorage.get("filePath");
 
     let content = files.read(path);
-    if(!content){
+    if (!content) {
         return " ";
     }
     return content;
@@ -147,45 +171,45 @@ function execJSCallback(val) {
     if (result) {
         switch (result.callback) {
             case "saveFile":
-            {
-                files.write(result.filePath, result.content);
-                toastLog("保存 " + result.filePath + " 成功");
-                break;
-            }
-            case "isTextChanged":
-            {
-                console.log("文件是否修改: " + result.isTextChanged);
-                if (!result.isTextChanged) {
-                    ui.finish();
+                {
+                    files.write(result.filePath, result.content);
+                    //toastLog("保存 " + result.filePath + " 成功");
                     break;
                 }
-
-                dialogs.build({
-                    title: "保存文件？",
-                    content: "是否在退出前保存文件？",
-                    positive: "保存",
-                    negative: "放弃",
-                    neutral: "取消",
-                    canceledOnTouchOutside: false,
-                    autoDismiss: true,
-                }).on("positive", (action, dialog) => {
-                    try {
-                        callJavaScript(ui.webView, AutoX.toString() + ";var auto0 = AutoX();auto0.invoke('getFilePath','',(data) => {let result = {};result.callback = 'saveFile';result.filePath = data;result.content = auto0.aceEditor.getValue();return result;});", null);
-                    } catch (e) {
-                        console.trace(e)
+            case "isTextChanged":
+                {
+                    console.log("文件是否修改: " + result.isTextChanged);
+                    if (!result.isTextChanged) {
+                        ui.finish();
+                        break;
                     }
-                    events.broadcast.emit("refreshPage", '');
-                    ui.finish();
-                }).on("negative", (action, dialog) => {
-                    ui.finish();
-                }).show();
-                break;
-            }
+
+                    dialogs.build({
+                        title: "保存文件？",
+                        content: "是否在退出前保存文件？",
+                        positive: "保存",
+                        negative: "放弃",
+                        neutral: "取消",
+                        canceledOnTouchOutside: false,
+                        autoDismiss: true,
+                    }).on("positive", (action, dialog) => {
+                        try {
+                            callJavaScript(ui.webView, AutoX.toString() + ";var auto0 = AutoX();auto0.invoke('getFilePath','',(data) => {let result = {};result.callback = 'saveFile';result.filePath = data;result.content = auto0.aceEditor.getValue();return result;});", null);
+                        } catch (e) {
+                            console.trace(e)
+                        }
+                        events.broadcast.emit("refreshPage", '');
+                        ui.finish();
+                    }).on("negative", (action, dialog) => {
+                        ui.finish();
+                    }).show();
+                    break;
+                }
             default:
-            {
-                console.log(result.callback + " is not defined!");
-                break;
-            }
+                {
+                    console.log(result.callback + " is not defined!");
+                    break;
+                }
         }
     }
 }
@@ -226,8 +250,7 @@ function webViewExpand_init(webViewWidget) {
                     callJavaScript(webView, "auto0.callback({'callId':" + callId + ", 'params': " + JSON.stringify(result) + "});", execJSCallback);
                 } else if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("file://") || url.startsWith("ws://") || url.startsWith("wss://")) {
                     webView.loadUrl(url);
-                } else {
-                }
+                } else {}
                 return true;
             } catch (e) {
                 if (e.javaException instanceof android.content.ActivityNotFoundException) {
@@ -261,3 +284,292 @@ webViewExpand_init(ui.webView);
 let filePath = files.path("./ace-builds-1.16.0/editor.html");
 ui.webView.getSettings().setJavaScriptEnabled(true);
 ui.webView.loadUrl("file://" + filePath);
+
+
+menus = [{
+        title: '命令',
+        src: 'ic_widgets_black_48dp'
+    },
+    {
+        title: '语法',
+        src: 'ic_font_download_black_48dp'
+    },
+    {
+        title: '主题',
+        src: 'ic_brightness_medium_black_48dp'
+    },
+    {
+        title: '日志',
+        src: 'ic_assignment_black_48dp'
+    },
+    {
+        title: '运行',
+        src: 'ic_play_arrow_black_48dp'
+    },
+    {
+        title: '撤销',
+        src: 'ic_undo_black_48dp',
+
+    },
+    {
+        title: '重做',
+        src: 'ic_redo_black_48dp',
+        onclick: 'editor.redo()'
+    },
+    {
+        title: '保存',
+        src: 'ic_save_black_48dp'
+    }
+]
+ui.bar.setDataSource(menus)
+ui.bar.on("item_click", function(item, i, itemView, listView) {
+    switch (item.title) {
+        case '命令':
+            // a=`${AutoX.toString()};
+            // var auto0 = AutoX();
+            // auto0.invoke('getFilePath','',(data) => {
+            //     let result = {};
+            //     result.callback = 'saveFile';
+            //     result.filePath = data;
+            //     result.content = auto0.aceEditor.getValue();
+            //     return result;});`
+
+            // callJavaScript(ui.webView, a, null);
+            callJavaScript(ui.webView, 'editor.prompt({ $type: "commands" });', null);
+            break;
+        case '语法':
+            callJavaScript(ui.webView, 'editor.prompt({ $type: "modes" });', null);
+            break;
+        case '主题':
+            aceEditorStorage = storages.create("aceEditor");
+            var arr = []
+            let lis = files.listDir('./ace-builds-1.16.0/css/theme/')
+            for (let i = 0; i < lis.length; i++) {
+                arr.push(files.getNameWithoutExtension(lis[i]))
+            }
+            arr.sort((a, b) => {
+                return a.localeCompare(b);
+            });
+            var dialog = dialogs.build({
+                title: "编辑器主题",
+                titleColor: "#1a1c1a",
+                items: arr,
+                itemsSelectMode: "singleChoice",
+                itemsSelectedIndex: aceEditorStorage.get("themeIndex") || 37,
+                itemsColor: "#1a1c1a",
+                type: "app",
+                wrapInScrollView: true,
+                positive: "确定"
+            }).on("single_choice", (index, item) => {
+
+                aceEditorStorage.put("themeItem", 'ace/theme/' + item);
+                aceEditorStorage.put("themeIndex", index);
+                toast("您选择的是" + item);
+                callJavaScript(ui.webView, `editor.setTheme('ace/theme/${item}');`, null);
+            });
+            let dialogWindow = dialog.getWindow();
+            let gradientDrawable = new android.graphics.drawable.GradientDrawable();
+            gradientDrawable.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+            gradientDrawable.setColor(colors.parseColor("#FFFFFF"));
+            gradientDrawable.setCornerRadius(80);
+            dialogWindow.setBackgroundDrawable(gradientDrawable);
+            dialog.show();
+            break;
+        case '日志':
+            showSheetDialog();
+            break;
+        case '运行':
+            let aceEditorStorage = storages.create("aceEditor");
+            let file = aceEditorStorage.get("filePath")
+            if (files.isFile(file)) {
+                try {
+                    callJavaScript(ui.webView, AutoX.toString() + ";var auto0 = AutoX();auto0.invoke('getFilePath','',(data) => {let result = {};result.callback = 'saveFile';result.filePath = data;result.content = auto0.aceEditor.getValue();return result;});", null);
+                } catch (e) {
+                    console.trace(e)
+                }
+                events.broadcast.emit("refreshPage", '');
+                //engines.execScriptFile(file);
+                execScriptFile(file)
+                if (!files.read(file).includes('"ui";')) {
+                    showSheetDialog();
+                }
+            }
+            break;
+        case '撤销':
+            callJavaScript(ui.webView, 'editor.undo()', null);
+            break;
+        case '重做':
+            callJavaScript(ui.webView, 'editor.redo()', null);
+            break;
+        case '保存':
+            try {
+                callJavaScript(ui.webView, AutoX.toString() + ";var auto0 = AutoX();auto0.invoke('getFilePath','',(data) => {let result = {};result.callback = 'saveFile';result.filePath = data;result.content = auto0.aceEditor.getValue();return result;});", null);
+            } catch (e) {
+                console.trace(e)
+            }
+            events.broadcast.emit("refreshPage", '');
+            toastLog("保存成功！");
+            break;
+        default:
+            // code
+    }
+
+});
+let actionLeftBar = [{
+    title: 'ESC',
+    onclick: 'editor.exitMultiSelectMode();'
+}, {
+    title: '↑',
+    onclick: 'editor.navigateUp(1);'
+}, {
+    title: 'TAB',
+    onclick: 'editor.indent();'
+}, {
+    title: '文档',
+    onclick: ''
+}, {
+    title: '←',
+    onclick: 'editor.navigateLeft(1)'
+}, {
+    title: '↓',
+    onclick: 'editor.navigateDown(1);'
+}, {
+    title: '→',
+    onclick: 'editor.navigateRight(1);'
+}, {
+    title: '格式化',
+    onclick: ''
+}];
+ui.actionLeftBar.setDataSource(actionLeftBar);
+ui.actionLeftBar.on("item_click", function(item, i, itemView, listView) {
+    if (item.title === '文档') {
+        app.openUrl("https://www.wuyunai.com/docs/");
+    } else if (item.title === '格式化') {
+        let script = `
+        var beautify = ace.require("ace/ext/beautify");
+          var session = editor.getSession();
+          var selection = editor.getSelection();
+            
+          if (selection.isEmpty()) {
+            // 格式化整个文档
+            beautify.beautify(session);
+          } else {
+           // 格式化选中的文本
+            var range = selection.getRange();
+            beautify.beautify(session, range);
+          }
+        `
+        callJavaScript(ui.webView, script, null);
+    }
+    let script = `${item.onclick}`
+    callJavaScript(ui.webView, script, null);
+});
+
+/*ui.actionLeftBar.on("item_long_click", function(e, item, i, itemView, listView) {
+    if (item.title == "TAB") {
+        
+    }
+    e.consumed = true;
+});*/
+
+
+let symbols = JSON.parse(files.read("symbols.json"));
+ui.actionBar.setDataSource(symbols);
+ui.actionBar.on("item_click", function(item, i, itemView, listView) {
+    //hint
+
+    let script = `var selection = editor.getSelection();
+    if (!selection.isEmpty() && "${item.insertText}" == "/") {
+        editor.toggleCommentLines();
+    } else {
+        editor.insert(${JSON.stringify(item.insertText)});
+    }`
+    callJavaScript(ui.webView, `togglecomment(${JSON.stringify(item.insertText)});`, null);
+});
+
+
+
+
+function showSheetDialog() {
+    let view = ui.inflate(
+        <card bg="#1a1c1a" shadowSize="100" cardCornerRadius="10dp" cardElevation="10dp" id="_card">
+            <vertical h="500">
+                <horizontal  gravity="right" marginRight="10" w="*">
+                    <img id="run"  tint="#c1c9bf" margin="8 16" gravity="center" src="file://res/drawable/play.png" />
+                    <img id="delete" tint="#c1c9bf" margin="8 16" gravity="center" src="file://res/drawable/delete.png" />
+                    <img id="close"  tint="#c1c9bf" margin="8 16" gravity="center" src="file://res/drawable/minimize.png" />
+                    <img id="open"  tint="#c1c9bf" margin="8 16" gravity="center" src="file://res/drawable/enlarge.png" />
+                </horizontal>
+                <globalconsole w="*" h="*"  id="globalconsole"  />
+            </vertical>
+            
+        </card>
+
+    );
+    // shape.widthRipple(activity).setColor("#1a1c1a").setRippleColor("#808080").into(view.run);
+    // shape.widthRipple(activity).setColor("#1a1c1a").setRippleColor("#808080").into(view.delete);
+    // shape.widthRipple(activity).setColor("#1a1c1a").setRippleColor("#808080").into(view.close);
+    // shape.widthRipple(activity).setColor("#1a1c1a").setRippleColor("#808080").into(view.open);
+
+    //view.icons.setDataSource(['', '', '', '']);
+    view.globalconsole.setColor("D", "#FFFFFF");
+    // view.globalconsole.setColor("D", "#7f7f80");
+
+    let mBottomSheetDialog = new BottomSheetDialog(activity);
+    mBottomSheetDialog.setContentView(view);
+    let mDialogBehavior = BottomSheetBehavior.from(view.getParent());
+    mDialogBehavior.setPeekHeight(getWindowHeight());
+    mDialogBehavior.setDraggable(false); //禁止滑动
+    mDialogBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback({
+        onStartChenged: function(view, i) {
+            if (i == BottomSheetBehavior.STATE_HIDDEN) {
+                mBottomSheetDialog.dismiss();
+                mDialogBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
+        },
+        onSlide: function(view, slideOffset) {
+            // 禁止滑动，可以根据需要进行其他处理
+            mDialogBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        }
+    }));
+
+    //显示Dialog
+    mBottomSheetDialog.show();
+    var window = mBottomSheetDialog.getWindow();
+    window.setDimAmount(0.5);
+
+    view.parent.setBackground(null);
+
+    view.run.on("click", function() {
+        let aceEditorStorage = storages.create("aceEditor");
+        let file = aceEditorStorage.get("filePath");
+        if (files.isFile(file)) {
+            execScriptFile(file)
+        }
+    });
+    view.delete.on("click", function() {
+        view.globalconsole.clear();
+    });
+    view.close.on("click", function() {
+        mBottomSheetDialog.dismiss();
+        mDialogBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    });
+    view.open.on("click", function() {
+        app.startActivity("console");
+    });
+
+    function getWindowHeight() {
+        let res = context.getResources();
+        let displayMetrics = res.getDisplayMetrics();
+        return displayMetrics.heightPixels;
+    }
+}
+
+function execScriptFile(scriptFile) {
+    let scriptFileStr = scriptFile.toString();
+    let offset = scriptFileStr.lastIndexOf("/");
+    let scriptFileDir = scriptFileStr.slice(0, offset + 1);
+    engines.execScriptFile(scriptFileStr, {
+        path: [scriptFileDir]
+    });
+}

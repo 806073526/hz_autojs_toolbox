@@ -27,10 +27,26 @@
 
     <script src="src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
     <script src="src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+    <script src="src-noconflict/ext-elastic_tabstops_lite.js" type="text/javascript" charset="utf-8"></script>
+    
     <script src="autojs/autojs_indices.js" type="text/javascript" charset="utf-8"></script>
     <script src="autojs/autojs_completer.js" type="text/javascript" charset="utf-8"></script>
     <script src="autojs/autojs_ace.js" type="text/javascript" charset="utf-8"></script>
-
+    <script src="src-noconflict/ext-beautify.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+       function setTheme(theme) {
+            editor.setTheme(theme || 'ace/theme/tomorrow_night');
+        }
+        function togglecomment(str) {
+            let editor = ace.edit('editor');
+            var selection = editor.getSelection();
+            if (!selection.isEmpty()&& str == "/") {
+                editor.toggleCommentLines();
+            }else{
+                editor.insert(str)
+            }
+        }
+    </script>
 </body>
 
 </html>
