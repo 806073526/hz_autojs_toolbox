@@ -1,0 +1,119 @@
+[
+    {
+        "hint": "(",
+        "insertText": "("
+    },
+    {
+        "hint": ")",
+        "insertText": ")"
+    },
+    {
+        "hint": "/",
+        "insertText": "/",
+        "action": "togglecomment"
+    },
+    {
+        "hint": "=",
+        "insertText": "="
+    },
+    {
+        "hint": ",",
+        "insertText": ","
+    },
+    {
+        "hint": ";",
+        "insertText": ";"
+    },
+    {
+        "hint": "\"",
+        "insertText": "\""
+    },
+    {
+        "hint": "'",
+        "insertText": "'"
+    },
+    {
+        "hint": "{",
+        "insertText": "{"
+    },
+    {
+        "hint": "}",
+        "insertText": "}"
+    },
+    {
+        "hint": "[",
+        "insertText": "["
+    },
+    {
+        "hint": "]",
+        "insertText": "]"
+    },
+    {
+        "hint": "`",
+        "insertText": "`"
+    },
+    {
+        "hint": "<",
+        "insertText": "<"
+    },
+    {
+        "hint": ">",
+        "insertText": ">"
+    },
+    {
+        "hint": "-",
+        "insertText": "-"
+    },
+    {
+        "hint": "+",
+        "insertText": "+"
+    },
+    {
+        "hint": "|",
+        "insertText": "|"
+    },
+    {
+        "hint": ":",
+        "insertText": ":"
+    },
+    {
+        "hint": "_",
+        "insertText": "_"
+    },
+    {
+        "hint": "*",
+        "insertText": "*"
+    },
+    {
+        "hint": "%",
+        "insertText": "%"
+    },
+    {
+        "hint": "\\",
+        "insertText": "\\"
+    },
+    {
+        "hint": "#",
+        "insertText": "#"
+    },
+    {
+        "hint": "$",
+        "insertText": "$"
+    },
+    {
+        "hint": "&",
+        "insertText": "&"
+    },
+    {
+        "hint": "!",
+        "insertText": "!"
+    },
+    {
+        "hint": "?",
+        "insertText": "?"
+    },
+    {
+        "hint": "^",
+        "insertText": "^"
+    }
+]
