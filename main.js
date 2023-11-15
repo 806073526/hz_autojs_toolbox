@@ -40,24 +40,29 @@ ui.layout(
                                 <card contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px" marginTop="30px">
                                     <vertical layout_gravity="center" bg="#ffffff">
                                         <text text="权限设置:" textSize="22sp" textColor="#210303" marginBottom="5px" />
-                                        <Switch h="20"  textSize="14sp" text="无障碍服务" id="autoService" checked="true" />
+                                        <Switch h="20"  textSize="14sp" text="无障碍服务" id="autoService" checked="false" />
                                         <horizontal>
-                                            <text textSize="12sp" text="必要权限(开启adb或者root后可无障碍保活)"/>
+                                            <text textSize="12sp" text="必要权限(预览设备、布局分析、图像处理依赖该权限)"/>
                                         </horizontal>
                                         
-                                        <Switch h="20" textSize="14sp" text="悬浮窗" id="floatyPermission" checked="true" marginTop="5px"/>
+                                        <Switch h="20"  textSize="14sp" text="无障碍保活" id="autoServiceKeep" checked="false" />
+                                        <horizontal>
+                                            <text textSize="12sp" text="保活开关(开启adb或者root后才能支持)"/>
+                                        </horizontal>
+                                        
+                                        <Switch h="20" textSize="14sp" text="悬浮窗" id="floatyPermission" checked="false" marginTop="5px"/>
                                         <horizontal>
                                             <text textSize="12sp" text="必要权限(弹窗提示信息依赖)"/>
                                         </horizontal>
                                         
-                                        <Switch h="20" textSize="14sp" text="前台服务" id="foregroundService" checked="true" marginTop="5px"/>
+                                        <Switch h="20" textSize="14sp" text="前台服务" id="foregroundService" checked="false" marginTop="5px"/>
                                         <horizontal>
                                             <text textSize="12sp" text="必要权限(增加程序后台存活率)"/>
                                         </horizontal>
                                         
                                         <Switch h="20" textSize="14sp" text="后台运行权限" id="backgroundOpenPermission" marginTop="5px" checked="false"/>
                                         <horizontal>
-                                            <text textSize="12sp" text="必要权限(权限管理-后台运行权限,建议手动设置)"/>
+                                            <text textSize="12sp" text="必要权限(权限管理-后台运行权限,非MIUI系统必须手动开启)"/>
                                         </horizontal>
                                         
                                         <Switch h="20" textSize="14sp" text="忽略电池优化" id="battery" marginTop="5px" checked="false"/>
@@ -119,6 +124,59 @@ ui.layout(
 ui.viewpager.setTitles(["设备信息", "功能设置", "运行日志"]);
 //让滑动页面和标签栏联动
 ui.tabs.setupWithViewPager(ui.viewpager);
+
+//创建选项菜单(右上角)
+ui.emitter.on("create_options_menu", menu => {
+    menu.add("热更新");
+    menu.add("关于");
+});
+//监听选项菜单点击
+ui.emitter.on("options_item_selected", (e, item) => {
+    switch (item.getTitle()) {
+        case "热更新":
+            dialogs.confirm("您确定要热更新APP版本么？").then(value=>{
+                if(!value){
+                    return;
+                }
+                threads.start(()=>{
+                    // 获取项目路径 默认为工具箱APP的路径 如果要更新其他APP 请修改
+                    let projectPath = files.cwd();
+                    // 设置本地临时更新路径
+                    let tempUpdatePath = "/sdcard/appSync/tempUpdateTools/";
+                    // 创建临时更新js目录
+                    files.createWithDirs(tempUpdatePath)
+                    // 可自定义 主要为了app端区分版本 请修改
+                    let hotUpdateVersion = "热更新版本";
+                    // 可替换为本地目录下载目录  注意zip压缩包,请在文件目录下全选文件压缩  
+                    let url = "http://tool.zjh336.cn/uploadPath/autoJsTools/webCommonPath/hz_autojs_toolbox.zip"
+                    toastLog(url+"开始下载");
+                    // 请求压缩包
+                    let r = http.get(url);
+                    if (r.statusCode == 200) {
+                        let zipPath = tempUpdatePath + "hz_autojs_toolbox.zip";
+                        files.remove(zipPath)
+                        // 下载压缩包到本地临时更新路径
+                        var content = r.body.bytes();
+                        files.writeBytes(zipPath, content);
+                        toastLog(zipPath + "下载成功！！！");
+                        // 解压下载文件到 项目路径  为防止误操作 请放开注释后再执行
+                        $zip.unzip(zipPath, projectPath);
+                        commonStorage.put("hotUpdateVersion", hotUpdateVersion)
+                        toastLog("热更新成功,请重启APP后生效！");
+                    } else {
+                        toastLog(url + "下载失败！！！");
+                    }                
+                });
+            });
+            break;
+        case "关于":
+            alert("关于", "华仔AutoJs工具箱 V"+app.versionName);
+            break;
+    }
+    e.consumed = true;
+});
+
+
 activity.setSupportActionBar(ui.toolbar)
 
 let permission = require("./permission.js")
@@ -198,6 +256,10 @@ function initUiSetting() {
                     <input id="otherClickText" inputType="text" hint="申请截图权限时要点击的文字" textSize="14sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
                 <horizontal h="68px">
+                    <text text="脚本悬浮控制条:" textSize="14sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
+                    <Switch id="脚本悬浮控制条" checked="false" h="*" w="*" gravity="left|center" layout_weight="2" />
+                </horizontal>
+                <horizontal h="68px">
                     <text text="标准宽度:" textSize="14sp" h="*" w="450px" gravity="left|center" layout_weight="1" />
                     <input id="standardWidth" inputType="number" hint="请输入标准宽度" textSize="14sp" h="*" w="*" margin="0" bg="#ffffff" padding="15px 0 0 0" gravity="left|center" layout_weight="2" />
                 </horizontal>
@@ -232,7 +294,7 @@ function initUiSetting() {
             <vertical layout_gravity="center" bg="#ffffff">
                 <text text="参数说明:" textSize="22sp" textColor="#210303" marginBottom="5px" />
                 <horizontal>
-                    <text textSize="14sp" text="注意：修改参数后,必须重新连接服务端后生效。"/>
+                    <text textSize="14sp" text="注意：修改参数后,必须重新连接服务端才能生效。使用在线版服务端,IP请写【tool.zjh336.cn】,Port请填写【80】"/>
                 </horizontal>
                 <horizontal>
                     <text textSize="14sp" text="1、服务端IP地址,如果是本地部署,请填写与当前设备同一网段的服务端IP。"/>
@@ -268,16 +330,19 @@ function initUiSetting() {
                     <text textSize="14sp" text="10、截图点击文字,申请截图权限的额外关键字,常见的包括立即开始、允许、同意,如有其它类型,在此配置即可。"/>
                 </horizontal>
                 <horizontal marginTop="6px">
-                    <text textSize="14sp" text="11、标准宽度,默认读取设备宽度,服务端进行多分辨率测试时需要用到,一般无需修改。"/>
+                    <text textSize="14sp" text="11、脚本悬浮控制条,文件管理中,运行脚本是否显示脚本悬浮控制条。"/>
                 </horizontal>
                 <horizontal marginTop="6px">
-                    <text textSize="14sp" text="12、标准高度,默认读取设备高度,服务端进行多分辨率测试时需要用到,一般无需修改。"/>
+                    <text textSize="14sp" text="12、标准宽度,默认读取设备宽度,服务端进行多分辨率测试时需要用到,一般无需修改。"/>
                 </horizontal>
                 <horizontal marginTop="6px">
-                    <text textSize="14sp" text="13、x偏移系数,服务端进行多分辨率测试时需要用到,一般无需修改。"/>
+                    <text textSize="14sp" text="13、标准高度,默认读取设备高度,服务端进行多分辨率测试时需要用到,一般无需修改。"/>
+                </horizontal>
+                <horizontal marginTop="6px">
+                    <text textSize="14sp" text="14、x偏移系数,服务端进行多分辨率测试时需要用到,一般无需修改。"/>
                 </horizontal>
                  <horizontal marginTop="6px">
-                    <text textSize="14sp" text="14、y偏移系数,服务端进行多分辨率测试时需要用到,一般无需修改。"/>
+                    <text textSize="14sp" text="15、y偏移系数,服务端进行多分辨率测试时需要用到,一般无需修改。"/>
                 </horizontal>
             </vertical>
         </card>`,
@@ -380,6 +445,12 @@ ui.saveSetting.on("click", () => {
     utils.setUICacheData(commonConstant.commonSettingKey, commonStorage)
     toastLog("保存成功！")
 })
+
+
+ui.脚本悬浮控制条.on("check",function(checked){
+    commonStorage.put("脚本悬浮控制条",checked);
+})
+
 /* // 加载设置按钮
 ui.loadSetting.on("click", () => {
     // 读取公共缓存数据
@@ -498,17 +569,25 @@ try {
                         service = item;
                         return !newArr.includes(item);
                     });
-                    //这里可以做一些保活处理
-                    if (service && whiteList.includes(service)) {
-                        try {
-                            newArr.push(service);
-                            let success = Settings.Secure.putString(contentResolver, "enabled_accessibility_services", newArr.join(":"));
-                            console.log(`${success ? "保活成功" : "保活失败"}----${service}`);
-                        } catch (error) {
-                            console.log("没有权限----", error);
+                    // 开启了保活处理
+                    if(ui.autoServiceKeep.checked){
+                        //这里可以做一些保活处理
+                        if (service && whiteList.includes(service)) {
+                            try {
+                                newArr.push(service);
+                                let success = Settings.Secure.putString(contentResolver, "enabled_accessibility_services", newArr.join(":"));
+                                
+                                if(success){
+                                    toastLog("无障碍保活成功");
+                                    ui.autoService.checked = true;
+                                }
+                                console.log(`${success ? "保活成功" : "保活失败"}----${service}`);
+                            } catch (error) {
+                                console.log("没有权限----", error);
+                            }
+                        } else {
+                            console.log("关闭了----", service);
                         }
-                    } else {
-                        console.log("关闭了----", service);
                     }
                 }
                 lastArr = newArr;

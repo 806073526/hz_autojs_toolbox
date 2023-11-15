@@ -2,7 +2,9 @@ importClass("android.content.pm.PackageManager");
 importClass("android.provider.Settings");
 let myPackageName = context.getPackageName();
 let obj = {}
-let utils = require('./common/utils.js')
+let utils = require('./common/utils.js');
+ // 储存对象
+let tempStorage = storages.create("zjh336.cn_temp");
 obj.init = function() {
     refreshState();
     //可以在回到界面时，刷新开关状态
@@ -12,6 +14,27 @@ obj.init = function() {
     ui.autoService.on("check", function(checked) {
         setAutoService(checked);
     });
+    
+    ui.autoServiceKeep.on("check",function(checked){
+        
+        tempStorage.put("autoServiceKeep",checked);
+        
+        if(checked){
+            let adb = $shell.checkAccess("adb");
+            let root = $shell.checkAccess("root");    
+            if(!adb && !root){
+                toastLog("adb和root权限均没有,无法开启保活");
+                ui.autoServiceKeep.checked = false;
+                tempStorage.put("autoServiceKeep", ui.autoServiceKeep.checked);
+            } else {
+                toastLog("开启了无障碍保活！");
+            }
+        } else {
+            toastLog("关闭了无障碍保活！");
+        }
+        
+    });    
+    
     ui.floatyPermission.on("check", function(checked, view) {
         //这里演示下使用startActivityForResult
         if (checked) {
@@ -110,6 +133,7 @@ obj.init = function() {
 
 
     function refreshState() {
+        ui.autoServiceKeep.checked = tempStorage.get("autoServiceKeep") || false;
         ui.autoService.checked = auto.service != null;
         ui.floatyPermission.checked = floaty.checkPermission();
         ui.foregroundService.checked = $settings.isEnabled("foreground_service");
@@ -198,7 +222,7 @@ obj.init = function() {
             result = method.invoke(appOps, op, new java.lang.Integer(android.os.Process.myUid()), context.getPackageName());
             return result == AppOpsManager.MODE_ALLOWED;
         } catch (err) {
-            console.error(err);
+            throw "弹出错误";
             return false;
         }
     }

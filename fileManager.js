@@ -30,6 +30,10 @@ ui.layout(
 let runScriptArr = [];
 
 
+let config = require('./common/config.js')
+// 公共储存对象
+var commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
+
 let fileManageStorage = storages.create("fileManageStorage");
 let defaultPath = fileManageStorage.get("defaultPath") || "/sdcard/appSync/";
 if (!defaultPath.endsWith("/")) {
@@ -328,11 +332,22 @@ function execScriptFile(scriptFile) {
     let offset = scriptFileStr.lastIndexOf("/");
     let scriptFileDir = scriptFileStr.slice(0, offset + 1);
     toastLog("运行" + scriptFileStr + "成功")
-    engines.startFloatingController(scriptFileStr, {
-        path: [scriptFileDir]
-    }, {
-        runImmediately: true
-    })
+    
+    let 脚本悬浮控制条 = commonStorage.get("脚本悬浮控制条") || false;
+    if(脚本悬浮控制条){
+        engines.startFloatingController(scriptFileStr, {
+            path: [scriptFileDir]
+        }, {
+            runImmediately: true
+        })    
+    } else {
+        engines.execScriptFile(scriptFileStr, {
+            path: [scriptFileDir]
+        }, {
+            runImmediately: true
+        })
+    }
+    
 }
 
 function getFileExtension(fileName) {

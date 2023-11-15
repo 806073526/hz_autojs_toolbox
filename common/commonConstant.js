@@ -8,6 +8,7 @@ let commonSettingKey = [
     { key: 'canvasOffset', type: "输入框" },
     /* { key: '文字识别插件', type: "单选框" }, */
     { key: '显示截图配置', type: "开关" },
+    { key: '脚本悬浮控制条', type: "开关"},
     { key: 'otherClickText', type: "输入框" },
     { key: 'standardWidth', type: "输入框" },
     { key: 'standardHeight', type: "输入框" },
