@@ -35,6 +35,8 @@ obj.init = function() {
         
     });    
     
+    
+    
     ui.floatyPermission.on("check", function(checked, view) {
         //这里演示下使用startActivityForResult
         if (checked) {
@@ -144,14 +146,14 @@ obj.init = function() {
         try {
             ui.backgroundOpenPermission.checked = checkMiuiPermission(10021);
         } catch (e) {
-            toastLog("当前系统无法读取后台运行权限,请保证在系统设置中开启即可");
+           console.log("当前系统无法读取后台运行权限,请保证在系统设置中开启即可");
             ui.backgroundOpenPermission.checked = false;
         }
         try {
             let pm = context.getSystemService(context.POWER_SERVICE);
             ui.battery.checked = pm.isIgnoringBatteryOptimizations(context.getPackageName());
         } catch (e) {
-            toastLog("当前系统无法读取是否忽略省电策略,请在系统设置中设置即可");
+            // toastLog("当前系统无法读取是否忽略省电策略,请在系统设置中设置即可");
             ui.battery.checked = false;
         }
     }
@@ -159,8 +161,10 @@ obj.init = function() {
     function setAutoService(checked) {
         if (checked) {
             if (checkPermission("android.permission.WRITE_SECURE_SETTINGS")) {
+                console.log("已有android.permission.WRITE_SECURE_SETTINGS权限");
                 openAccessibility();
             } else {
+                console.log("检测adb权限");
                 if ($shell.checkAccess("adb")) {
                     shell("pm grant " + myPackageName + " android.permission.WRITE_SECURE_SETTINGS", {
                         adb: true,
@@ -168,6 +172,7 @@ obj.init = function() {
                     toastLog("adb授权成功");
                     openAccessibility();
                 } else {
+                    console.log("检测root权限");
                     if ($shell.checkAccess("root")) {
                         shell("pm grant " + myPackageName + " android.permission.WRITE_SECURE_SETTINGS", {
                             root: true,
@@ -177,6 +182,7 @@ obj.init = function() {
                     } else {
                         console.info("\n也可使用WRITE_SECURE_SETTINGS权限开启无障碍服务\n授权代码已复制，使用adb激活");
                         setClip("adb shell pm grant " + myPackageName + " android.permission.WRITE_SECURE_SETTINGS");
+                        console.log("打开无障碍服务设置界面,请手动设置");
                         app.startActivity({
                             action: "android.settings.ACCESSIBILITY_SETTINGS",
                         });
@@ -189,6 +195,7 @@ obj.init = function() {
     }
 
     function openAccessibility() {
+        console.log("设置无障碍服务")
         let mServices = ":" + myPackageName + "/com.stardust.autojs.core.accessibility.AccessibilityService";
         let enabledServices = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
         enabledServices = enabledServices ? enabledServices.replace(new RegExp(mServices, "g"), "") : "";
@@ -225,6 +232,16 @@ obj.init = function() {
             throw "弹出错误";
             return false;
         }
+    }
+    
+    // 读取是否开启了无障碍保活开关
+    let autoServiceKeep = tempStorage.get("autoServiceKeep") || false;
+    
+    // 如果开启了无障碍保活开关
+    if(autoServiceKeep){
+        console.log("开启了无障碍保活,自动申请权限");
+        // 自动申请一下权限 防止读取异常
+        setAutoService(true);
     }
 }
 module.exports = obj
