@@ -161,7 +161,7 @@ obj.init = function() {
     function setAutoService(checked) {
         if (checked) {
             if (checkPermission("android.permission.WRITE_SECURE_SETTINGS")) {
-                console.log("已有android.permission.WRITE_SECURE_SETTINGS权限");
+                console.log("已有WRITE_SECURE_SETTINGS权限");
                 openAccessibility();
             } else {
                 console.log("检测adb权限");
@@ -190,15 +190,16 @@ obj.init = function() {
                 }
             }
         } else if (auto.service != null) {
+			console.info("关闭无障碍服务");
             auto.service.disableSelf();
         }
     }
 
     function openAccessibility() {
-        console.log("设置无障碍服务")
+        console.info("开启无障碍服务")
         let mServices = ":" + myPackageName + "/com.stardust.autojs.core.accessibility.AccessibilityService";
         let enabledServices = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
-        enabledServices = enabledServices ? enabledServices.replace(new RegExp(mServices, "g"), "") : "";
+		enabledServices = enabledServices ? enabledServices.replace(new RegExp(mServices, "g"), "") : "";
         Settings.Secure.putString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, "");
         Settings.Secure.putString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, enabledServices + mServices);
     }
@@ -239,9 +240,23 @@ obj.init = function() {
     
     // 如果开启了无障碍保活开关
     if(autoServiceKeep){
-        console.log("开启了无障碍保活,自动申请权限");
+		console.warn("开启了无障碍保活开关");
+			
+		console.info("检查无障碍服务状态："+ (auto.service != null));
+		if(auto.service!=null){
+			console.info("尝试关闭无障碍服务");
+			auto.service.disableSelf();
+		}
+        console.info("自动开启无障碍服务");
         // 自动申请一下权限 防止读取异常
         setAutoService(true);
+		
+		setTimeout(()=>{
+			console.info("检查无障碍服务状态："+ (auto.service != null));
+			// 设置开关
+			ui.autoService.checked = auto.service != null;	
+		},800)
+		
     }
 }
 module.exports = obj
