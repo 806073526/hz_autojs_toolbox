@@ -363,7 +363,8 @@ utilsObj.handlerPageStting = (pageSetting) => {
  * @param {Array} joinMatchingPageKeysArray 参与匹配的页面参数key数组
  */
 utilsObj.multipleConditionMatchingByPageSetting = (pageSetting, allScreenImg, joinMatchingPageKeysArray) => {
-
+	// 关闭特征匹配 特征匹配不稳定
+	commonStorage.put("closeFeatures",true);
     // 获取参与匹配的页面key
     let joinMatchingPageKeys = joinMatchingPageKeysArray || utilsObj.getJoinMatchingPageKey()
 
@@ -434,6 +435,7 @@ utilsObj.multipleConditionMatchingByPageSetting = (pageSetting, allScreenImg, jo
     // 回收图片
     utilsObj.recycleNull(allScreenImg);
     console.info("当前页:【" + (firstMatchingPageKey || "无匹配") + "】")
+	commonStorage.remove("closeFeatures")
     return firstMatchingPageKey || ""
 }
 
@@ -1192,6 +1194,37 @@ utilsObj.getConvertCoefficient = () => {
     }
 }
 
+/**
+ * 获取缩放小图转换系数
+ */
+ utilsObj.getConvertSmartScalCoefficient = () => {
+    // 设置了无需坐标转换
+   if (commonStorage.get("notNeedConvert")) {
+       return {
+           x: 1,
+           y: 1
+       }
+   }
+   // 获取设备配置的分辨率
+   let curScreenWith = device.width
+   let curScreenHeight = device.height
+   // x系数
+   let xCoefficient = curScreenHeight / config.screenHeight
+   // y系数
+   let yCoefficient = xCoefficient
+
+   // 竖屏模式 切换转换系数
+   if (utilsObj.getOrientation() === 1) {
+       xCoefficient = curScreenWith / config.screenWidth
+       yCoefficient = xCoefficient;
+   }
+   return {
+       x: xCoefficient,
+       y: yCoefficient
+   }
+}
+
+
 
 /**
  * 转换兼容分辨率坐标
@@ -1263,7 +1296,7 @@ utilsObj.scaleSmallImg = (targetImg) => {
     // 非标准分辨率 压缩小图
     if (!utilsObj.getIsStandard()) {
         // 获取转换系数
-        let coefficient = utilsObj.getConvertCoefficient();
+        let coefficient = utilsObj.getConvertSmartScalCoefficient();
         // 缩放图片  非游戏界面 可以横屏竖屏转换  缩放比例时会 报错
         let smallTargetImg = images.scale(targetImg, coefficient.x, coefficient.y);
         // 回收图片
@@ -2368,8 +2401,8 @@ utilsObj.regionalMatchTemplate = (img, targetImg, x1, y1, x2, y2, threshold, max
 utilsObj.regionalFindImgOrFeatures = (img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, bigScale, smallScale, featuresThreshold, isOpenGray, isOpenThreshold, canvasMsg) => {
     // 标准分辨率下进行找图  否则进行特征匹配
     let isStandard = utilsObj.getIsStandard()
-	// 标准分辨率下 或者 设置了无需转换标记
-    if (isStandard || commonStorage.get("notNeedConvert")) {
+	// 标准分辨率下 或者 设置了无需转换标记 或者关闭了特征匹配
+    if (isStandard || commonStorage.get("notNeedConvert") || commonStorage.get("closeFeatures")) {
         // 区域找图
         return utilsObj.regionalFindImg2(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, isOpenGray, isOpenThreshold, canvasMsg)
     } else {
@@ -2495,7 +2528,7 @@ utilsObj.regionalMatchTemplateOrMatchFeatures = (img, targetImg, x1, y1, x2, y2,
     // 标准分辨率
     let isStandard = utilsObj.getIsStandard();
 	// 标准分辨率下 或者 设置了无需转换标记
-    if (isStandard || commonStorage.get("notNeedConvert")) {
+     if (isStandard || commonStorage.get("notNeedConvert") || commonStorage.get("closeFeatures")) {
         // 区域特征匹配
         return utilsObj.regionalMatchTemplate2(img, targetImg, x1, y1, x2, y2, threshold, maxVal, imgThreshold, matchingCount, transparentMask, isOpenGray, isOpenThreshold, canvasMsg);
     } else {

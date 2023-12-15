@@ -11,6 +11,14 @@ ui.layout(
                     <vertical padding="15 10" bg="#e3e0e0">
                         <ScrollView h="auto" layout_weight="25">
                             <vertical h="auto" layout_weight="25" >
+                                <card id="notice" visibility="visible" contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px" marginBottom="30px">
+                                    <vertical>
+                                        <text text="公告:" textSize="22sp" textColor="#210303" marginBottom="5px" />
+                                        <horizontal>
+                                            <text id="NOTICE_MSG" text=""  textSize="14sp" h="*" w="*" gravity="left|center" layout_weight="1" />
+                                        </horizontal>
+                                    </vertical>
+                                </card>
                                 <card contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px">
                                     <vertical id="deiveceBaseInfo" visibility="visible">
                                         <text text="基本信息:" textSize="22sp" textColor="#210303" marginBottom="5px" />
@@ -36,7 +44,6 @@ ui.layout(
                                         </horizontal>
                                     </vertical>
                                 </card>
-                                
                                 <card contentPadding="50px 20px 50px 20px" cardBackgroundColor="#ffffff" cardCornerRadius="15px" cardElevation="15px" marginTop="30px">
                                     <vertical layout_gravity="center" bg="#ffffff">
                                         <text text="权限设置:" textSize="22sp" textColor="#210303" marginBottom="5px" />
@@ -62,7 +69,7 @@ ui.layout(
                                         
                                         <Switch h="20" textSize="14sp" text="后台运行权限" id="backgroundOpenPermission" marginTop="5px" checked="false"/>
                                         <horizontal>
-                                            <text textSize="12sp" text="必要权限(权限管理-后台运行权限,非MIUI系统必须手动开启)"/>
+                                            <text textSize="12sp" text="必要权限(如果有这个权限的话,非MIUI系统无法自动读取)"/>
                                         </horizontal>
                                         
                                         <Switch h="20" textSize="14sp" text="忽略电池优化" id="battery" marginTop="5px" checked="false"/>
@@ -79,7 +86,7 @@ ui.layout(
                                             <text textSize="14sp" text="1、按要求设置进行必要权限设置,建议在权限管理中开启所有权限。"/>
                                         </horizontal>
                                         <horizontal marginTop="6px">
-                                            <text textSize="14sp" text="2、查看学习指南,进行服务端部署。"/>
+                                            <text textSize="14sp" text="2、查看操作文档,进行服务端部署。"/>
                                         </horizontal>
                                         <horizontal marginTop="6px">
                                             <text textSize="14sp" text="3、功能设置,配置服务端IP,连接服务端,再到服务端进行操作。"/>
@@ -92,7 +99,7 @@ ui.layout(
                             </vertical>
                         </ScrollView>
                         <horizontal layout_weight="1" gravity="center" w="*" marginTop="30px">
-                            <button id="help" layout_gravity="center"  text="学习指南" w="300px" style="Widget.AppCompat.Button.Colored" bg="#827f7f" foreground="?selectableItemBackground"/>
+                            <button id="help" layout_gravity="center"  text="操作文档" w="300px" style="Widget.AppCompat.Button.Colored" bg="#827f7f" foreground="?selectableItemBackground"/>
                             <button id="gitee" layout_gravity="center"  text="开源地址" w="300px" marginLeft="50px" style="Widget.AppCompat.Button.Colored" bg="#ff5723" foreground="?selectableItemBackground"/>
                         </horizontal>
                     </vertical>
@@ -394,6 +401,42 @@ function initUiSetting() {
 }
 
 
+// 获取服务端信息
+function getDefaultInfo(){
+	// 服务端校验地址
+	let serverUrl = "https://gitee.com/zjh336/zjh336_limit/raw/master/gjx/newVersion/appNotice.txt?t=" + (new Date().getTime());
+	try {
+		let serverResult = http.get(serverUrl);
+		if (serverResult.statusCode !== 200) {
+			return;
+		}
+		let resutlJson = serverResult.body.string();
+		if (!resutlJson) {
+			return;
+		}
+		let resultObj = JSON.parse(resutlJson);
+		if (!resultObj) {
+			return;
+		}
+		console.log(resultObj);
+		let showNotice = resultObj.showNotice;
+		let noticeMsg = resultObj.noticeMsg;
+
+		if (showNotice && noticeMsg) {
+			ui["notice"].attr("visibility", "visible");
+			ui["NOTICE_MSG"].attr("text", noticeMsg);
+		} else {
+			ui["notice"].attr("visibility", "gone");
+		}
+	} catch (e) {
+		console.error(e);
+		ui["notice"].attr("visibility", "gone");
+		return;
+	}
+}
+
+getDefaultInfo();
+
 // 开始脚本
 function startScriptFun(callback) {
     let remoteIp = ui['服务端IP'].attr("text")
@@ -434,7 +477,7 @@ ui.runUi.on("click", () => {
 })
 
 ui.help.on("click", () => {
-    app.openUrl("https://www.zjh336.cn/?id=2126")
+    app.openUrl("http://doc.zjh336.cn/#/integrate/hz_autojs_tools_box/")
 })
 ui.gitee.on("click", () => {
     app.openUrl("https://gitee.com/zjh336/")
