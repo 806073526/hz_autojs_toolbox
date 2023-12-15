@@ -1209,13 +1209,13 @@ utilsObj.getConvertCoefficient = () => {
    let curScreenWith = device.width
    let curScreenHeight = device.height
    // x系数
-   let xCoefficient = curScreenHeight / config.screenHeight
+   let xCoefficient = curScreenHeight / utilsObj.getScreenHeight()
    // y系数
    let yCoefficient = xCoefficient
 
    // 竖屏模式 切换转换系数
    if (utilsObj.getOrientation() === 1) {
-       xCoefficient = curScreenWith / config.screenWidth
+       xCoefficient = curScreenWith / utilsObj.getScreenWidth()
        yCoefficient = xCoefficient;
    }
    return {
