@@ -83,7 +83,7 @@ events.broadcast.on("startPreviewDevice", (params) => {
                 // 临时图片路径
                 files.remove(tempImgPath)
 
-                let curImageBase = images.toBase64(afterImg, "JPG", deviceParam.imgQuality);
+                let curImageBase = images.toBase64(afterImg, "jpg", deviceParam.imgQuality);
                 sleep(10)
                 if(curImageBase !== lastImageBase){
                     http.request(commonStorage.get("服务端IP") + ':' + (commonStorage.get("服务端Port") || 9998)  +'/attachmentInfo/updateFileMap', {
