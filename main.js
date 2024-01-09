@@ -136,7 +136,25 @@ ui.tabs.setupWithViewPager(ui.viewpager);
 ui.emitter.on("create_options_menu", menu => {
     menu.add("热更新");
     menu.add("关于");
+	menu.add("启动AjPro服务端");
 });
+
+
+activity.setSupportActionBar(ui.toolbar)
+
+let permission = require("./permission.js")
+permission.init()
+
+let config = require('./common/config.js')
+// 导入公共常量类
+let commonConstant = require('./common/commonConstant.js')
+// 公共储存对象
+var commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
+let utils = require('./common/utils.js')
+let deviceUUID = utils.getDeviceUUID()
+ui['设备UUID'].attr('text', deviceUUID)
+
+
 //监听选项菜单点击
 ui.emitter.on("options_item_selected", (e, item) => {
     switch (item.getTitle()) {
@@ -179,24 +197,27 @@ ui.emitter.on("options_item_selected", (e, item) => {
         case "关于":
             alert("关于", "华仔AutoJs工具箱 V"+app.versionName);
             break;
+		case "启动AjPro服务端":
+			const btnContent = ui.startScript.attr("text");
+			if("连接服务端" === btnContent){
+				toastLog("请先连接服务端");
+				return;
+			}
+			http.request(commonStorage.get("服务端IP") + ':' + (commonStorage.get("服务端Port") || 9998) + '/device/startAjServer?deviceUUID=' + deviceUUID, {
+				headers: {
+					"deviceUUID": deviceUUID
+				},
+				method: 'GET',
+				contentType: 'application/json',
+				body: null,
+			}, (e) => {
+				toastLog("请稍候");
+			});
+			break;
     }
     e.consumed = true;
 });
 
-
-activity.setSupportActionBar(ui.toolbar)
-
-let permission = require("./permission.js")
-permission.init()
-
-let config = require('./common/config.js')
-// 导入公共常量类
-let commonConstant = require('./common/commonConstant.js')
-// 公共储存对象
-var commonStorage = storages.create("zjh336.cn" + config.commonScriptKey);
-let utils = require('./common/utils.js')
-let deviceUUID = utils.getDeviceUUID()
-ui['设备UUID'].attr('text', deviceUUID)
 
 const resources = context.getResources();
 const densityDpi = resources.getDisplayMetrics().densityDpi;
