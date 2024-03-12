@@ -10,6 +10,9 @@ let isClose = true
 let socketTask = null
 let connectOK = false // 连接是否成功
 
+
+let pingWaitCount = 0; // ping等待未响应数量
+
 // 导入配置类
 let config = require("./config.js")
 // 导入工具类
@@ -138,28 +141,29 @@ websocketHandler.initWebSocket = () => {
     if (webSocketLog) {
       console.log("websocket连接异常！", err)
     }
+	
     // websocket连接异常
     connectOK = false
-    if (webSocketConfig.isHeartData && heartTimer != null) {
-      websocketHandler.clearHeart()
-    }
-    if (reConnectTimer == null && webSocketConfig.isReconnect) {
-      // 执行重连操作
-      websocketHandler.reConnectSocket()
-    }
+   // if (webSocketConfig.isHeartData && heartTimer != null) {
+   //   websocketHandler.clearHeart()
+   // }
+	
+
+    
   })
   // 监听socket关闭
   socketTask.on("closing", (code, reason, ws) => {
     //console.log("websocket正在关闭！")
   })
   socketTask.on("closed", (code, reason, ws) => {
-    // console.log("websocket已关闭！")
+    console.log("websocket已关闭！")
     connectOK = false
     if (webSocketConfig.isHeartData && heartTimer != null) {
       websocketHandler.clearHeart()
     }
     // 判断是否为异常关闭
     if (reConnectTimer == null && !isClose && webSocketConfig.isReconnect) {
+		console.log("执行重连！")
       // 执行重连操作
       websocketHandler.reConnectSocket()
     }
@@ -190,16 +194,22 @@ websocketHandler.close = () => {
 // 心跳
 websocketHandler.startHeart = () => {
   heartTimer = setInterval(() => {
-    let webSocketLog = commonStorage.get('webSocketLog')
-    if (webSocketLog) {
-      console.log("websocket发送心跳！")
-    }
+   
     // 发送心跳
     socketTask.send(fixedMessageEnum['ping'].toString())
-
-
-   // 每次心跳 更新消息到服务端
-   sendDeviceToServer()
+	pingWaitCount++;
+	
+	let webSocketLog = commonStorage.get('webSocketLog')
+    if (webSocketLog) {
+      console.log("websocket发送心跳！等待回复:"+pingWaitCount)
+    }
+	
+	// 达到两次心跳未响应  且 开启了重连设置
+	if (pingWaitCount >= 2 && reConnectTimer == null && webSocketConfig.isReconnect) {
+	  console.log("执行重连！")
+      // 执行重连操作
+      websocketHandler.reConnectSocket()
+	}
   }, webSocketConfig.heartTime)
 }
 // 清除心跳
@@ -211,18 +221,23 @@ websocketHandler.clearHeart = () => {
 }
 // 重连
 websocketHandler.reConnectSocket = () => {
-  reConnectTimer = setInterval(() => {
-    let webSocketLog = commonStorage.get('webSocketLog')
+  let fun = ()=>{
+	let webSocketLog = commonStorage.get('webSocketLog')
     if (webSocketLog) {
-      console.log("websocket重连！")
+      console.log("websocket重连！等待回复："+pingWaitCount)
     }
     if (!connectOK) {
       websocketHandler.initWebSocket()
     } else {
       if (reConnectTimer) {
         clearInterval(reConnectTimer)
+		reConnectTimer = null;
       }
     }
+  }	
+  fun();
+  reConnectTimer = setInterval(() => {
+    fun();
   }, webSocketConfig.reConnectTime)
 }
 // 发送消息
@@ -263,10 +278,13 @@ websocketHandler.objectMessageHandler = (text) => {
 websocketHandler.fixedMessageHandler = (message) => {
   switch (message) {
     case fixedMessageEnum['pong']:
+	  pingWaitCount = 0;
       let webSocketLog = commonStorage.get('webSocketLog')
       if (webSocketLog) {
         console.log("websocket心跳回复")
       }
+	  // 回复心跳了 再发送设备信息到服务端
+	  sendDeviceToServer()
       break
     case fixedMessageEnum['exit']:
       break
