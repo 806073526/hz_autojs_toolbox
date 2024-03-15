@@ -206,7 +206,7 @@ websocketHandler.startHeart = () => {
 	
 	// 达到两次心跳未响应  且 开启了重连设置
 	if (pingWaitCount >= 2 && reConnectTimer == null && webSocketConfig.isReconnect) {
-	  console.log("执行重连！")
+	  // console.log("执行重连！")
       // 执行重连操作
       websocketHandler.reConnectSocket()
 	}
