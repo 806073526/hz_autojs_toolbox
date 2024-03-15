@@ -53,7 +53,7 @@ function isNumberStr(str) {
 // 脚本退出时取消WebSocket
 events.on('exit', () => {
   if (socketTask) {
-    console.log("退出脚本,关闭websocket")
+    console.log("退出脚本,关闭ws")
     socketTask.cancel();
   }
 });
@@ -120,7 +120,7 @@ websocketHandler.initWebSocket = () => {
   socketTask.on("open", (res, ws) => {
     let webSocketLog = commonStorage.get('webSocketLog')
     if (webSocketLog) {
-      console.log("websocket连接成功！")
+      console.log("ws连接成功！")
     }
     isClose = false
     connectOK = true
@@ -139,7 +139,7 @@ websocketHandler.initWebSocket = () => {
   socketTask.on("failure", (err, res, ws) => {
     let webSocketLog = commonStorage.get('webSocketLog')
     if (webSocketLog) {
-      console.log("websocket连接异常！", err)
+      console.log("ws连接异常！", err)
     }
 	
     // websocket连接异常
@@ -156,7 +156,7 @@ websocketHandler.initWebSocket = () => {
     //console.log("websocket正在关闭！")
   })
   socketTask.on("closed", (code, reason, ws) => {
-    console.log("websocket已关闭！")
+    console.log("ws已关闭！")
     connectOK = false
     if (webSocketConfig.isHeartData && heartTimer != null) {
       websocketHandler.clearHeart()
@@ -201,7 +201,7 @@ websocketHandler.startHeart = () => {
 	
 	let webSocketLog = commonStorage.get('webSocketLog')
     if (webSocketLog) {
-      console.log("websocket发送心跳！等待回复:"+pingWaitCount)
+      console.log("ws发送心跳！等待回复:"+pingWaitCount)
     }
 	
 	// 达到两次心跳未响应  且 开启了重连设置
@@ -224,7 +224,7 @@ websocketHandler.reConnectSocket = () => {
   let fun = ()=>{
 	let webSocketLog = commonStorage.get('webSocketLog')
     if (webSocketLog) {
-      console.log("websocket重连！等待回复："+pingWaitCount)
+      console.log("ws重连！等待回复："+pingWaitCount)
     }
     if (!connectOK) {
       websocketHandler.initWebSocket()
@@ -244,7 +244,7 @@ websocketHandler.reConnectSocket = () => {
 websocketHandler.sendMessage = (message) => {
   let webSocketLog = commonStorage.get('webSocketLog')
   if (webSocketLog) {
-    console.log("websocket发送消息:" + message)
+    console.log("ws发送消息:" + message)
   }
   socketTask.send(message)
 }
@@ -281,7 +281,7 @@ websocketHandler.fixedMessageHandler = (message) => {
 	  pingWaitCount = 0;
       let webSocketLog = commonStorage.get('webSocketLog')
       if (webSocketLog) {
-        console.log("websocket心跳回复")
+        console.log("ws心跳回复")
       }
 	  // 回复心跳了 再发送设备信息到服务端
 	  sendDeviceToServer()
